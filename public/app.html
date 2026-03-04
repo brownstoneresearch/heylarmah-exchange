@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Dashboard — Hey Larmah Exchange</title>
+  <link rel="stylesheet" href="./styles.css"/>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="wrap">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo">HL</div>
+      <div class="brand-text">
+        <h1>Hey Larmah Exchange</h1>
+        <div class="sub" id="whoami">Loading…</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="kycBadge"></div>
+      <button class="btn btn-secondary btn-sm" onclick="logout()">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- Live Prices Ticker -->
+  <div class="price-ticker" id="priceTicker">
+    <span class="ticker-item">Loading prices…</span>
+  </div>
+
+  <!-- Announcements -->
+  <div class="ann-bar" id="annBar"></div>
+
+  <!-- Tabs -->
+  <div class="tabs" id="mainTabs">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="trade">Trade</button>
+    <button class="tab-btn" data-tab="swap">Swap</button>
+    <button class="tab-btn" data-tab="deposit">Deposit</button>
+    <button class="tab-btn" data-tab="withdraw">Withdraw</button>
+    <button class="tab-btn" data-tab="kyc">KYC</button>
+    <button class="tab-btn" data-tab="history">History</button>
+  </div>
+
+  <!-- ══════════════════════════════════════ OVERVIEW ══ -->
+  <div class="tab-panel active" id="tab-overview">
+    <div class="grid-3" style="margin-bottom:18px">
+      <div class="card">
+        <div class="card-title">My Wallets</div>
+        <div id="walletDisplay">Loading…</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Exchange Rates</div>
+        <div id="ratesDisplay">Loading…</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Quick Swap</div>
+        <div class="field">
+          <label>From</label>
+          <select id="qSwapFrom" onchange="syncQSwap()">
+            <option value="NGN">NGN</option>
+            <option value="BTC">BTC</option>
+            <option value="ETH">ETH</option>
+            <option value="USDT">USDT</option>
+            <option value="BNB">BNB</option>
+            <option value="TRX">TRX</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>To</label>
+          <select id="qSwapTo">
+            <option value="BTC">BTC</option>
+            <option value="ETH">ETH</option>
+            <option value="USDT">USDT</option>
+            <option value="BNB">BNB</option>
+            <option value="TRX">TRX</option>
+            <option value="NGN">NGN</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Amount</label>
+          <input id="qSwapAmt" placeholder="0.00"/>
+        </div>
+        <button class="btn btn-teal btn-full" onclick="doQuickSwap()">Swap Now</button>
+        <div id="qSwapMsg" class="msg"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recent Transactions</div>
+      <div class="tbl-wrap"><table id="recentLedger">
+        <thead><tr><th>Time</th><th>Type</th><th>Currency</th><th>Amount</th></tr></thead>
+        <tbody><tr><td colspan="4" class="text-faint" style="text-align:center;padding:20px">Loading…</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ TRADE ══════ -->
+  <div class="tab-panel" id="tab-trade">
+    <div class="flex" style="margin-bottom:16px;gap:10px;flex-wrap:wrap">
+      <label style="font-size:12px;color:var(--text-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.8px;text-transform:uppercase">Pair</label>
+      <select id="tradePair" onchange="loadOrderbook();loadMyOrders()" style="width:auto;padding:6px 12px">
+        <option value="BTCNGN">BTC/NGN</option>
+        <option value="ETHNGN">ETH/NGN</option>
+        <option value="USDTNGN">USDT/NGN</option>
+        <option value="BNBNGN">BNB/NGN</option>
+        <option value="TRXNGN">TRX/NGN</option>
+      </select>
+    </div>
+    <div class="grid-2" style="margin-bottom:18px">
+      <div class="card">
+        <div class="card-title">Place Limit Order</div>
+        <div class="field">
+          <label>Side</label>
+          <select id="orderSide">
+            <option value="buy">🟢 Buy</option>
+            <option value="sell">🔴 Sell</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Price (NGN per unit)</label>
+          <input id="orderPrice" placeholder="e.g. 95000000"/>
+        </div>
+        <div class="field">
+          <label>Amount (crypto)</label>
+          <input id="orderAmount" placeholder="e.g. 0.001"/>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="placeOrder()">Place Order</button>
+        <div id="orderMsg" class="msg"></div>
+      </div>
+      <div class="card">
+        <div class="card-title flex-between">Order Book <button class="btn btn-secondary btn-sm" onclick="loadOrderbook()">↻</button></div>
+        <div class="grid-2" style="gap:10px">
+          <div>
+            <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--red);margin-bottom:8px;letter-spacing:.8px">ASKS (SELL)</div>
+            <div class="tbl-wrap"><table id="asksTable">
+              <thead><tr><th>Price</th><th>Amt</th></tr></thead><tbody></tbody>
+            </table></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--green);margin-bottom:8px;letter-spacing:.8px">BIDS (BUY)</div>
+            <div class="tbl-wrap"><table id="bidsTable">
+              <thead><tr><th>Price</th><th>Amt</th></tr></thead><tbody></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title flex-between">My Orders <button class="btn btn-secondary btn-sm" onclick="loadMyOrders()">↻</button></div>
+      <div class="tbl-wrap"><table id="myOrdersTable">
+        <thead><tr><th>ID</th><th>Pair</th><th>Side</th><th>Status</th><th>Price</th><th>Amount</th><th>Remaining</th><th>Time</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ SWAP ═══════ -->
+  <div class="tab-panel" id="tab-swap">
+    <div style="max-width:520px;margin:0 auto">
+      <div class="card">
+        <div class="card-title">Swap Currencies</div>
+        <div class="grid-2">
+          <div class="field">
+            <label>From</label>
+            <select id="swapFrom" onchange="syncSwapTo()">
+              <option value="NGN">🇳🇬 NGN — Naira</option>
+              <option value="BTC">₿ BTC — Bitcoin</option>
+              <option value="ETH">Ξ ETH — Ethereum</option>
+              <option value="USDT">₮ USDT — Tether</option>
+              <option value="BNB">⬡ BNB — BNB</option>
+              <option value="TRX">⚡ TRX — TRON</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>To</label>
+            <select id="swapTo">
+              <option value="BTC">₿ BTC — Bitcoin</option>
+              <option value="ETH">Ξ ETH — Ethereum</option>
+              <option value="USDT">₮ USDT — Tether</option>
+              <option value="BNB">⬡ BNB — BNB</option>
+              <option value="TRX">⚡ TRX — TRON</option>
+              <option value="NGN">🇳🇬 NGN — Naira</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Amount</label>
+          <input id="swapAmount" placeholder="Enter amount"/>
+        </div>
+        <div class="swap-rate-preview" id="swapPreview"></div>
+        <button class="btn btn-teal btn-full" onclick="doSwap()">Execute Swap</button>
+        <div id="swapMsg" class="msg"></div>
+        <div class="info-box" style="margin-top:16px">
+          Swap fee: <span class="text-amber" id="swapFeeDisplay">0.50%</span> &nbsp;·&nbsp; Rate set by exchange
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ DEPOSIT ════ -->
+  <div class="tab-panel" id="tab-deposit">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Deposit Naira (Paystack)</div>
+        <div class="field">
+          <label>Amount (NGN)</label>
+          <input id="depositAmount" placeholder="Minimum ₦100"/>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="doDeposit()">Proceed to Payment</button>
+        <div id="depositMsg" class="msg"></div>
+        <div class="info-box" style="margin-top:14px">
+          You'll be redirected to Paystack's secure checkout. Payment credited automatically.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Deposit Crypto</div>
+        <div class="field">
+          <label>Coin</label>
+          <select id="depCoin" onchange="loadNetworks()">
+            <option value="BTC">BTC — Bitcoin</option>
+            <option value="ETH">ETH — Ethereum</option>
+            <option value="USDT">USDT — Tether</option>
+            <option value="BNB">BNB</option>
+            <option value="TRX">TRX — TRON</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Network</label>
+          <select id="depNetwork"></select>
+        </div>
+        <button class="btn btn-secondary btn-full" onclick="loadDepositAddress()">Get Deposit Address</button>
+        <div id="depAddrWrap" style="margin-top:14px;display:none">
+          <div style="font-size:11px;color:var(--text-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px">Your Deposit Address</div>
+          <div class="addr-box" id="depAddr"></div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="copyAddr()">Copy Address</button>
+          <div class="info-box" style="margin-top:10px">⚠️ Only send the selected coin on the selected network. Wrong network = lost funds.</div>
+        </div>
+        <div id="depNoAddr" style="margin-top:14px;display:none" class="msg info">
+          Deposit address not set yet. Contact support to generate your deposit address.
+        </div>
+        <div id="depMsg" class="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ WITHDRAW ═══ -->
+  <div class="tab-panel" id="tab-withdraw">
+    <div class="grid-2" style="margin-bottom:18px">
+      <div class="card">
+        <div class="card-title">Withdraw Naira</div>
+        <div class="field"><label>Amount (NGN)</label><input id="wnAmount" placeholder="e.g. 5000"/></div>
+        <div class="field"><label>Bank Code</label><input id="wnBankCode" placeholder="e.g. 058 for GTBank"/></div>
+        <div class="field"><label>Account Number</label><input id="wnAcctNum" placeholder="0123456789"/></div>
+        <div class="field"><label>Account Name</label><input id="wnAcctName" placeholder="Full name on account"/></div>
+        <button class="btn btn-primary btn-full" onclick="withdrawNgn()">Request Withdrawal</button>
+        <div id="wnMsg" class="msg"></div>
+        <div class="info-box" style="margin-top:10px">KYC approval required. Processed within 24hrs.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Withdraw Crypto</div>
+        <div class="field">
+          <label>Coin</label>
+          <select id="wcCoin" onchange="loadWithdrawNetworks()">
+            <option value="BTC">BTC — Bitcoin</option>
+            <option value="ETH">ETH — Ethereum</option>
+            <option value="USDT">USDT — Tether</option>
+            <option value="BNB">BNB</option>
+            <option value="TRX">TRX — TRON</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Network</label>
+          <select id="wcNetwork"></select>
+        </div>
+        <div class="field"><label>Amount</label><input id="wcAmount" placeholder="e.g. 0.001"/></div>
+        <div class="field"><label>Wallet Address</label><input id="wcAddr" placeholder="Destination address"/></div>
+        <button class="btn btn-teal btn-full" onclick="withdrawCrypto()">Request Withdrawal</button>
+        <div id="wcMsg" class="msg"></div>
+        <div class="info-box" style="margin-top:10px">KYC approval required. Double-check address before submitting.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">My Withdrawals</div>
+      <div class="tbl-wrap"><table id="withdrawalsTable">
+        <thead><tr><th>ID</th><th>Currency</th><th>Network</th><th>Amount</th><th>Status</th><th>Destination</th><th>Created</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ KYC ════════ -->
+  <div class="tab-panel" id="tab-kyc">
+    <div style="max-width:560px;margin:0 auto">
+      <div class="card">
+        <div class="card-title">Identity Verification (KYC)</div>
+        <div class="kyc-status-box" id="kycStatusBox"></div>
+        <div id="kycFormWrap">
+          <div class="grid-2">
+            <div class="field">
+              <label>Document Type</label>
+              <select id="kycDocType">
+                <option value="NIN">NIN</option>
+                <option value="BVN">BVN</option>
+                <option value="Passport">International Passport</option>
+                <option value="DriverLicense">Driver's License</option>
+                <option value="VoterCard">Voter's Card</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Document Number</label>
+              <input id="kycDocNum" placeholder="Enter number"/>
+            </div>
+          </div>
+          <div class="info-box">
+            After submitting your document details, our team will verify your identity within 1-2 business days.
+          </div>
+          <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="submitKyc()">Submit KYC</button>
+        </div>
+        <div id="kycMsg" class="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ HISTORY ════ -->
+  <div class="tab-panel" id="tab-history">
+    <div class="flex" style="margin-bottom:14px;gap:10px;flex-wrap:wrap">
+      <label style="font-size:12px;color:var(--text-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.8px;text-transform:uppercase">Pair</label>
+      <select id="histPair" onchange="loadTrades()" style="width:auto;padding:6px 12px">
+        <option value="BTCNGN">BTC/NGN</option>
+        <option value="ETHNGN">ETH/NGN</option>
+        <option value="USDTNGN">USDT/NGN</option>
+        <option value="BNBNGN">BNB/NGN</option>
+        <option value="TRXNGN">TRX/NGN</option>
+      </select>
+    </div>
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-title">Market Trades</div>
+      <div class="tbl-wrap"><table id="tradesTable">
+        <thead><tr><th>ID</th><th>Price (NGN)</th><th>Amount</th><th>Time</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">My Ledger</div>
+      <div class="tbl-wrap"><table id="ledgerTable">
+        <thead><tr><th>Time</th><th>Type</th><th>Currency</th><th>Amount</th><th>Reference</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script src="/app.js"></script>
+</body>
+</html>

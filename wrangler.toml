@@ -1,0 +1,10 @@
+name = "heylarmah-exchange"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "public"
+
+[vars]
+PUBLIC_URL = "https://heylarmah-exchange.pages.dev"
+ADMIN_EMAIL = "heylarmahtech@outlook.com"
+SWAP_FEE_BPS = "50"
+TRADE_FEE_BPS = "20"

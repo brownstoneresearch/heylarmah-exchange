@@ -1,0 +1,12 @@
+{
+  "name": "heylarmah-exchange",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev ./public --compatibility-flag nodejs_compat",
+    "deploy": "wrangler pages deploy ./public"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

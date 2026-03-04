@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Paystack Callback • Hey Larmah Exchange</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="container">
+    <section class="card">
+      <h1>Confirming payment...</h1>
+      <div id="msg" class="msg"></div>
+      <div class="small muted">If this page doesn't redirect, open the dashboard and refresh your wallets.</div>
+      <a class="link" href="/app.html">Go to Dashboard</a>
+    </section>
+  </div>
+  <script>
+    const token = localStorage.getItem("token");
+    const params = new URLSearchParams(window.location.search);
+    const reference = params.get("reference") || params.get("trxref");
+    const msg = (t, ok=false) => {
+      const el = document.getElementById("msg");
+      el.textContent = t;
+      el.className = "msg " + (ok ? "ok" : "err");
+    };
+
+    async function run() {
+      if (!reference) return msg("Missing Paystack reference in URL.");
+      if (!token) return msg("You are not logged in. Please login and verify from dashboard.");
+
+      try {
+        const res = await fetch("/api/paystack/verify?reference=" + encodeURIComponent(reference), {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const j = await res.json();
+        if (!res.ok) return msg(j.error || "Verification failed");
+        msg("Payment verified. Wallet credited: " + (j.creditedNgn || ""), true);
+        setTimeout(() => window.location.href = "/app.html", 1200);
+      } catch (e) {
+        msg("Network error: " + e.message);
+      }
+    }
+    run();
+  </script>
+</body>
+</html>

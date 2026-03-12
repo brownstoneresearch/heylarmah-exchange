@@ -1,5 +1,6 @@
 {
   "name": "heylarmah-exchange",
+<<<<<<< HEAD
   "version": "4.0.0",
   "private": true,
   "scripts": {
@@ -10,6 +11,15 @@
   },
   "devDependencies": {
     "supabase": "^2.78.1",
+=======
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev ./public --compatibility-flag nodejs_compat",
+    "deploy": "wrangler pages deploy ./public"
+  },
+  "devDependencies": {
+>>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
     "wrangler": "^3.0.0"
   }
 }

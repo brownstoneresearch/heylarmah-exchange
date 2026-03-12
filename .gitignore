@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 node_modules
 .env
 .dev.vars
@@ -6,3 +7,9 @@ worker-secrets.json
 .generated-jwt-secret.txt
 wrangler.toml.local
 .DS_Store
+=======
+node_modules/
+.env
+.dev.vars
+dist/
+>>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f

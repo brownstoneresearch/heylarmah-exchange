@@ -9,8 +9,11 @@
   <meta property="og:description" content="Trade Bitcoin, Ethereum, USDT, BNB, TRX for Naira. Regulated Nigerian crypto exchange."/>
   <meta name="theme-color" content="#f59e0b"/>
   <link rel="stylesheet" href="./styles.css"/>
+<<<<<<< HEAD
   <script src="./config.js"></script>
   <script src="./runtime.js"></script>
+=======
+>>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 </head>
 <body>
 <div class="topbar"></div>
@@ -103,8 +106,11 @@
 
 <script>
 const $ = id => document.getElementById(id);
+<<<<<<< HEAD
 const appUrl = window.HLX?.appUrl || (path => path);
 const sharedApi = window.HLX?.api || (async () => ({ok:false,status:0,j:{error:'Runtime not loaded'}}));
+=======
+>>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 
 function showTab(tab) {
   ['login','register','forgot'].forEach(t => {
@@ -129,7 +135,16 @@ function togglePwd(id, el) {
 }
 
 async function api(path, opts={}) {
+<<<<<<< HEAD
   return sharedApi(path, opts);
+=======
+  const tok = localStorage.getItem('token');
+  const headers = {'Content-Type':'application/json', ...(opts.headers||{})};
+  if (tok) headers['Authorization'] = 'Bearer ' + tok;
+  const res = await fetch(path, {...opts, headers});
+  const j = await res.json().catch(()=>({}));
+  return {ok:res.ok, j};
+>>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 }
 
 async function doLogin() {
@@ -145,7 +160,11 @@ async function doLogin() {
   localStorage.setItem('userRole', j.user?.role||'user');
   setMsg('loginMsg','Welcome back! Redirecting…','ok');
   setTimeout(() => {
+<<<<<<< HEAD
     window.location.href = j.user?.role === 'admin' ? appUrl('/admin.html') : appUrl('/app.html');
+=======
+    window.location.href = j.user?.role === 'admin' ? '/admin.html' : '/app.html';
+>>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
   }, 500);
 }
 
@@ -166,7 +185,11 @@ async function doRegister() {
   localStorage.setItem('token', j.token);
   localStorage.setItem('userRole', j.user?.role||'user');
   setMsg('regMsg','Account created! Redirecting…','ok');
+<<<<<<< HEAD
   setTimeout(()=>{ window.location.href = appUrl('/app.html'); }, 500);
+=======
+  setTimeout(()=>{ window.location.href='/app.html'; }, 500);
+>>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 }
 
 async function doForgot() {
@@ -184,7 +207,11 @@ async function doForgot() {
   const tok = localStorage.getItem('token');
   if (!tok) return;
   const {ok,j} = await api('/api/me');
+<<<<<<< HEAD
   if (ok) window.location.href = j.user?.role==='admin' ? appUrl('/admin.html') : appUrl('/app.html');
+=======
+  if (ok) window.location.href = j.user?.role==='admin' ? '/admin.html' : '/app.html';
+>>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 })();
 </script>
 </body>

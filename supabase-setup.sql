@@ -140,6 +140,7 @@ CREATE TABLE IF NOT EXISTS announcements (
   expires_at TIMESTAMPTZ
 );
 
+<<<<<<< HEAD
 CREATE INDEX IF NOT EXISTS idx_trades_pair_created_at ON trades(pair, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ledger_user_created_at ON ledger(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_withdrawals_user_created_at ON withdrawals(user_id, created_at DESC);
@@ -147,6 +148,8 @@ CREATE INDEX IF NOT EXISTS idx_withdrawals_status_created_at ON withdrawals(stat
 CREATE INDEX IF NOT EXISTS idx_kyc_status_submitted_at ON kyc(status, submitted_at ASC);
 CREATE INDEX IF NOT EXISTS idx_announcements_active_created_at ON announcements(active, created_at DESC);
 
+=======
+>>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 -- ── Seed default rates (NGN per 1 unit, in kobo = NGN * 100) ──────────────
 -- Admin can update these via dashboard
 INSERT INTO rates(pair, rate) VALUES
@@ -383,6 +386,7 @@ BEGIN
   WHERE id = p_withdrawal_id;
 END; $$;
 
+<<<<<<< HEAD
 
 CREATE OR REPLACE FUNCTION finalize_paystack_deposit(
   p_reference TEXT,
@@ -434,6 +438,8 @@ BEGIN
   );
 END; $$;
 
+=======
+>>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 CREATE OR REPLACE FUNCTION get_admin_stats()
 RETURNS JSON LANGUAGE plpgsql AS $$
 DECLARE

@@ -1,7 +1,6 @@
 /* Hey Larmah Exchange — User Dashboard v3.0 */
 'use strict';
 
-<<<<<<< HEAD
 const { api: coreApi, appUrl, REALTIME } = window.HLX || {};
 
 // ── Core API ──────────────────────────────────────────────────────────────────
@@ -9,7 +8,6 @@ async function api(path, opts={}) {
   const result = await coreApi(path, opts);
   if (result.status === 401) { logout(); return {ok:false, status:401, j:{error:'Session expired'}}; }
   return result;
-=======
 // ── Core API ──────────────────────────────────────────────────────────────────
 async function api(path, opts={}) {
   const tok = localStorage.getItem('token');
@@ -20,7 +18,6 @@ async function api(path, opts={}) {
   const j   = await res.json().catch(()=>({}));
   if (res.status === 401) { logout(); return {ok:false, j:{error:'Session expired'}}; }
   return {ok:res.ok, status:res.status, j};
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 }
 
 const $ = id => document.getElementById(id);
@@ -35,11 +32,8 @@ function setMsg(id, text, type='err') {
 
 function logout() {
   localStorage.removeItem('token'); localStorage.removeItem('userRole');
-<<<<<<< HEAD
   window.location.href = appUrl('/');
-=======
   window.location.href='/';
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 }
 
 function badge(status) {
@@ -95,22 +89,16 @@ function loadWithdrawNetworks() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   const tok = localStorage.getItem('token');
-<<<<<<< HEAD
   if (!tok) { window.location.href = appUrl('/'); return; }
-=======
   if (!tok) { window.location.href='/'; return; }
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 
   const {ok,j} = await api('/api/me');
   if (!ok) { logout(); return; }
 
   // Admin redirect
   if (j.user?.role === 'admin' && !location.search.includes('noredirect')) {
-<<<<<<< HEAD
     window.location.href = appUrl('/admin.html'); return;
-=======
     window.location.href = '/admin.html'; return;
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
   }
 
   $('whoami').textContent = `${j.user?.email} · ${j.user?.role||'user'}`;
@@ -130,7 +118,6 @@ async function init() {
   loadNetworks();
   loadWithdrawNetworks();
 
-<<<<<<< HEAD
   startRealtime();
 }
 
@@ -192,10 +179,8 @@ function startRealtime() {
     if (!document.hidden) refreshRealtime(true);
   });
   refreshRealtime(true);
-=======
   // Auto-refresh prices every 30s
   setInterval(loadLivePrices, 30000);
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 }
 
 // ── Live prices ───────────────────────────────────────────────────────────────
@@ -473,11 +458,8 @@ async function loadKycStatus() {
   if (formWrap) {
     formWrap.style.display = (s==='approved'||s==='pending') ? 'none' : 'block';
     if (s==='approved') box.innerHTML += '<div class="msg ok" style="margin-top:12px">✅ Your identity has been verified. You can now withdraw.</div>';
-<<<<<<< HEAD
     if (s==='pending')  box.innerHTML += "<div class=\"msg info\" style=\"margin-top:12px\">⏳ Your KYC is under review. We'll notify you soon.</div>";
-=======
     if (s==='pending')  box.innerHTML += '<div class="msg info" style="margin-top:12px">⏳ Your KYC is under review. We'll notify you soon.</div>';
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
     if (s==='rejected') box.innerHTML += '<div class="msg err" style="margin-top:12px">❌ KYC rejected. Please resubmit with correct documents.</div>';
   }
 }

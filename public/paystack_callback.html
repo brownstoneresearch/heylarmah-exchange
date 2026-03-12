@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Paystack Callback • Hey Larmah Exchange</title>
   <link rel="stylesheet" href="./styles.css" />
-<<<<<<< HEAD
+
   <script src="./config.js"></script>
   <script src="./runtime.js"></script>
-=======
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
+
+
 </head>
 <body>
   <div class="container">
@@ -17,23 +17,23 @@
       <h1>Confirming payment...</h1>
       <div id="msg" class="msg"></div>
       <div class="small muted">If this page doesn't redirect, open the dashboard and refresh your wallets.</div>
-<<<<<<< HEAD
+
       <a class="link" href="https://heylarmah-exchange.pages.dev/app.html">Go to Dashboard</a>
-=======
+
       <a class="link" href="/app.html">Go to Dashboard</a>
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
+
     </section>
   </div>
   <script>
     const token = localStorage.getItem("token");
-<<<<<<< HEAD
+
     const appUrl = window.HLX?.appUrl || (path => path);
     const params = new URLSearchParams(window.location.search);
     const reference = params.get("reference") || params.get("trxref") || params.get("ref");
-=======
+
     const params = new URLSearchParams(window.location.search);
     const reference = params.get("reference") || params.get("trxref");
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
+
     const msg = (t, ok=false) => {
       const el = document.getElementById("msg");
       el.textContent = t;
@@ -45,12 +45,12 @@
       if (!token) return msg("You are not logged in. Please login and verify from dashboard.");
 
       try {
-<<<<<<< HEAD
+
         const res = await window.HLX.api("/api/paystack/verify?reference=" + encodeURIComponent(reference));
         if (!res.ok) return msg(res.j.error || "Verification failed");
         msg("Payment verified. Wallet credited: " + (res.j.creditedNgn || res.j.amountNgn || ""), true);
         setTimeout(() => window.location.href = appUrl("/app.html"), 1200);
-=======
+
         const res = await fetch("/api/paystack/verify?reference=" + encodeURIComponent(reference), {
           headers: { "Authorization": "Bearer " + token }
         });
@@ -58,7 +58,7 @@
         if (!res.ok) return msg(j.error || "Verification failed");
         msg("Payment verified. Wallet credited: " + (j.creditedNgn || ""), true);
         setTimeout(() => window.location.href = "/app.html", 1200);
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
+
       } catch (e) {
         msg("Network error: " + e.message);
       }

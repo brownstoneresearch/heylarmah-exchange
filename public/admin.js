@@ -1,14 +1,12 @@
 /* Hey Larmah Exchange — Admin Dashboard v3.0 */
 'use strict';
 
-<<<<<<< HEAD
 const { api: coreApi, appUrl, REALTIME } = window.HLX || {};
 
 async function api(path, opts={}) {
   const result = await coreApi(path, opts);
   if (result.status === 401) { logout(); return {ok:false, status:401, j:{error:'Session expired'}}; }
   return result;
-=======
 async function api(path, opts={}) {
   const tok = localStorage.getItem('token');
   const headers = { ...(opts.headers||{}) };
@@ -18,7 +16,6 @@ async function api(path, opts={}) {
   const j   = await res.json().catch(()=>({}));
   if (res.status === 401) { logout(); return {ok:false,j:{error:'Session expired'}}; }
   return {ok:res.ok, status:res.status, j};
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 }
 
 const $ = id => document.getElementById(id);
@@ -40,11 +37,8 @@ function badge(status) {
 
 function logout() {
   localStorage.removeItem('token'); localStorage.removeItem('userRole');
-<<<<<<< HEAD
   window.location.href = appUrl('/');
-=======
   window.location.href='/';
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 }
 
 const NETWORKS = {
@@ -76,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function init() {
   const tok = localStorage.getItem('token');
-<<<<<<< HEAD
   if (!tok) { window.location.href = appUrl('/'); return; }
   const {ok,j} = await api('/api/me');
   if (!ok || j.user?.role !== 'admin') { window.location.href = appUrl('/app.html'); return; }
@@ -129,14 +122,12 @@ function startAdminRealtime() {
     if (!document.hidden) refreshAdminRealtime(true);
   });
   refreshAdminRealtime(true);
-=======
   if (!tok) { window.location.href='/'; return; }
   const {ok,j} = await api('/api/me');
   if (!ok || j.user?.role !== 'admin') { window.location.href='/app.html'; return; }
   $('adminWhoami').textContent = `${j.user.email} · Admin`;
   loadStats();
   loadAdminNetworks();
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────

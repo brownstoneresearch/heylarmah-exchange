@@ -1,1140 +1,1732 @@
-export default {
-  async fetch(request, env) {
-    return handleRequest(request, env);
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// node_modules/unenv/dist/runtime/_internal/utils.mjs
+function createNotImplementedError(name) {
+  return new Error(`[unenv] ${name} is not implemented yet!`);
+}
+__name(createNotImplementedError, "createNotImplementedError");
+
+// node_modules/unenv/dist/runtime/node/internal/perf_hooks/performance.mjs
+var _timeOrigin = globalThis.performance?.timeOrigin ?? Date.now();
+var _performanceNow = globalThis.performance?.now
+  ? globalThis.performance.now.bind(globalThis.performance)
+  : () => Date.now() - _timeOrigin;
+
+var nodeTiming = {
+  name: "node",
+  entryType: "node",
+  startTime: 0,
+  duration: 0,
+  nodeStart: 0,
+  v8Start: 0,
+  bootstrapComplete: 0,
+  environment: 0,
+  loopStart: 0,
+  loopExit: 0,
+  idleTime: 0,
+  uvMetricsInfo: {
+    loopCount: 0,
+    events: 0,
+    eventsWaiting: 0,
+  },
+  detail: void 0,
+  toJSON() {
+    return this;
+  },
+};
+
+var PerformanceEntry = class {
+  static {
+    __name(this, "PerformanceEntry");
+  }
+  __unenv__ = true;
+  detail;
+  entryType = "event";
+  name;
+  startTime;
+  constructor(name, options) {
+    this.name = name;
+    this.startTime = options?.startTime || _performanceNow();
+    this.detail = options?.detail;
+  }
+  get duration() {
+    return _performanceNow() - this.startTime;
+  }
+  toJSON() {
+    return {
+      name: this.name,
+      entryType: this.entryType,
+      startTime: this.startTime,
+      duration: this.duration,
+      detail: this.detail,
+    };
   }
 };
 
-async function handleRequest(request, env) {
-  try {
-    const url = new URL(request.url);
+var PerformanceMark = class PerformanceMark2 extends PerformanceEntry {
+  static {
+    __name(this, "PerformanceMark");
+  }
+  entryType = "mark";
+  constructor() {
+    super(...arguments);
+  }
+  get duration() {
+    return 0;
+  }
+};
 
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: corsHeaders(request, env) });
+var PerformanceMeasure = class extends PerformanceEntry {
+  static {
+    __name(this, "PerformanceMeasure");
+  }
+  entryType = "measure";
+};
+
+var PerformanceResourceTiming = class extends PerformanceEntry {
+  static {
+    __name(this, "PerformanceResourceTiming");
+  }
+  entryType = "resource";
+  serverTiming = [];
+  connectEnd = 0;
+  connectStart = 0;
+  decodedBodySize = 0;
+  domainLookupEnd = 0;
+  domainLookupStart = 0;
+  encodedBodySize = 0;
+  fetchStart = 0;
+  initiatorType = "";
+  name = "";
+  nextHopProtocol = "";
+  redirectEnd = 0;
+  redirectStart = 0;
+  requestStart = 0;
+  responseEnd = 0;
+  responseStart = 0;
+  secureConnectionStart = 0;
+  startTime = 0;
+  transferSize = 0;
+  workerStart = 0;
+  responseStatus = 0;
+};
+
+var PerformanceObserverEntryList = class {
+  static {
+    __name(this, "PerformanceObserverEntryList");
+  }
+  __unenv__ = true;
+  getEntries() {
+    return [];
+  }
+  getEntriesByName(_name, _type) {
+    return [];
+  }
+  getEntriesByType(_type) {
+    return [];
+  }
+};
+
+var Performance = class {
+  static {
+    __name(this, "Performance");
+  }
+  __unenv__ = true;
+  timeOrigin = _timeOrigin;
+  eventCounts = new Map();
+  _entries = [];
+  _resourceTimingBufferSize = 0;
+  navigation = void 0;
+  timing = void 0;
+  timerify(_fn, _options) {
+    throw createNotImplementedError("Performance.timerify");
+  }
+  get nodeTiming() {
+    return nodeTiming;
+  }
+  eventLoopUtilization() {
+    return {};
+  }
+  markResourceTiming() {
+    return new PerformanceResourceTiming("");
+  }
+  onresourcetimingbufferfull = null;
+  now() {
+    if (this.timeOrigin === _timeOrigin) {
+      return _performanceNow();
     }
-
-    if (url.pathname === "/api/health") {
-      return json({ ok: true, service: "heylarmah-exchange", time: new Date().toISOString() }, 200, request, env);
-    }
-
-    // ---------------- Auth ----------------
-    if (url.pathname === "/api/auth/register" && request.method === "POST") {
-      const body = await readJson(request);
-      return await registerUser(body, request, env);
-    }
-
-    if (url.pathname === "/api/auth/login" && request.method === "POST") {
-      const body = await readJson(request);
-      return await loginUser(body, request, env);
-    }
-
-    if (url.pathname === "/api/auth/forgot-password" && request.method === "POST") {
-      const body = await readJson(request);
-      return await forgotPassword(body, request, env);
-    }
-
-    if (url.pathname === "/api/auth/reset-password" && request.method === "POST") {
-      const body = await readJson(request);
-      return await resetPassword(body, request, env);
-    }
-
-    if (url.pathname === "/api/me" && request.method === "GET") {
-      const auth = await requireAuth(request, env);
-      return await getMe(auth, request, env);
-    }
-
-    // ---------------- User ----------------
-    if (url.pathname === "/api/wallets" && request.method === "GET") {
-      const auth = await requireAuth(request, env);
-      return await getWallets(auth, request, env);
-    }
-
-    if (url.pathname === "/api/rates" && request.method === "GET") {
-      return await getRates(request, env);
-    }
-
-    if (url.pathname === "/api/announcements" && request.method === "GET") {
-      return await getAnnouncements(request, env);
-    }
-
-    if (url.pathname === "/api/swap" && request.method === "POST") {
-      const auth = await requireAuth(request, env);
-      const body = await readJson(request);
-      return await executeSwap(auth, body, request, env);
-    }
-
-    if (url.pathname === "/api/orders" && request.method === "POST") {
-      const auth = await requireAuth(request, env);
-      const body = await readJson(request);
-      return await placeOrder(auth, body, request, env);
-    }
-
-    if (url.pathname === "/api/orders" && request.method === "GET") {
-      const auth = await requireAuth(request, env);
-      return await getOrders(auth, request, env);
-    }
-
-    if (url.pathname.startsWith("/api/orders/") && request.method === "DELETE") {
-      const auth = await requireAuth(request, env);
-      const id = Number(url.pathname.split("/").pop());
-      return await cancelOrder(auth, id, request, env);
-    }
-
-    if (url.pathname === "/api/trades" && request.method === "GET") {
-      const auth = await requireAuth(request, env);
-      return await getTrades(auth, url, request, env);
-    }
-
-    if (url.pathname === "/api/ledger" && request.method === "GET") {
-      const auth = await requireAuth(request, env);
-      return await getLedger(auth, request, env);
-    }
-
-    if (url.pathname === "/api/kyc" && request.method === "POST") {
-      const auth = await requireAuth(request, env);
-      const body = await readJson(request);
-      return await submitKyc(auth, body, request, env);
-    }
-
-    if (url.pathname === "/api/withdrawals" && request.method === "GET") {
-      const auth = await requireAuth(request, env);
-      return await getWithdrawals(auth, request, env);
-    }
-
-    if (url.pathname === "/api/withdrawals/ngn" && request.method === "POST") {
-      const auth = await requireAuth(request, env);
-      const body = await readJson(request);
-      return await requestWithdrawalNgn(auth, body, request, env);
-    }
-
-    if (url.pathname === "/api/withdrawals/crypto" && request.method === "POST") {
-      const auth = await requireAuth(request, env);
-      const body = await readJson(request);
-      return await requestWithdrawalCrypto(auth, body, request, env);
-    }
-
-    if (url.pathname === "/api/deposit-addresses" && request.method === "GET") {
-      const auth = await requireAuth(request, env);
-      const coin = url.searchParams.get("coin");
-      const network = url.searchParams.get("network");
-      return await getDepositAddress(auth, coin, network, request, env);
-    }
-
-    // ---------------- Paystack ----------------
-    if (url.pathname === "/api/paystack/init" && request.method === "POST") {
-      const auth = await requireAuth(request, env);
-      const body = await readJson(request);
-      return await paystackInit(auth, body, request, env);
-    }
-
-    if (url.pathname === "/api/paystack/verify" && request.method === "GET") {
-      const auth = await requireAuth(request, env);
-      const reference = url.searchParams.get("reference");
-      return await paystackVerify(auth, reference, request, env);
-    }
-
-    if (url.pathname === "/api/paystack/webhook" && request.method === "POST") {
-      const raw = await request.text();
-      return await paystackWebhook(raw, request, env);
-    }
-
-    // ---------------- Admin ----------------
-    if (url.pathname === "/api/admin/stats" && request.method === "GET") {
-      const auth = await requireAdmin(request, env);
-      return await adminStats(auth, request, env);
-    }
-
-    if (url.pathname === "/api/admin/users" && request.method === "GET") {
-      const auth = await requireAdmin(request, env);
-      return await adminUsers(auth, url, request, env);
-    }
-
-    if (url.pathname === "/api/admin/kyc/pending" && request.method === "GET") {
-      const auth = await requireAdmin(request, env);
-      return await adminKycPending(auth, request, env);
-    }
-
-    if (/^\/api\/admin\/kyc\/\d+\/(approve|reject)$/.test(url.pathname) && request.method === "POST") {
-      const auth = await requireAdmin(request, env);
-      const body = await readJson(request);
-      return await adminKycResolve(auth, url, body, request, env);
-    }
-
-    if (url.pathname === "/api/admin/withdrawals/pending" && request.method === "GET") {
-      const auth = await requireAdmin(request, env);
-      return await adminWithdrawalsPending(auth, request, env);
-    }
-
-    if (/^\/api\/admin\/withdrawals\/\d+\/(approve|reject)$/.test(url.pathname) && request.method === "POST") {
-      const auth = await requireAdmin(request, env);
-      const body = await readJson(request);
-      return await adminWithdrawalResolve(auth, url, body, request, env);
-    }
-
-    if (url.pathname === "/api/admin/rates" && request.method === "POST") {
-      const auth = await requireAdmin(request, env);
-      const body = await readJson(request);
-      return await adminSetRate(auth, body, request, env);
-    }
-
-    if (url.pathname === "/api/admin/wallets/credit" && request.method === "POST") {
-      const auth = await requireAdmin(request, env);
-      const body = await readJson(request);
-      return await adminWalletCredit(auth, body, request, env);
-    }
-
-    if (url.pathname === "/api/admin/wallets/debit" && request.method === "POST") {
-      const auth = await requireAdmin(request, env);
-      const body = await readJson(request);
-      return await adminWalletDebit(auth, body, request, env);
-    }
-
-    if (url.pathname === "/api/admin/deposit-addresses" && request.method === "POST") {
-      const auth = await requireAdmin(request, env);
-      const body = await readJson(request);
-      return await adminDepositAddress(auth, body, request, env);
-    }
-
-    if (url.pathname === "/api/admin/announcements" && request.method === "POST") {
-      const auth = await requireAdmin(request, env);
-      const body = await readJson(request);
-      return await adminAnnouncement(auth, body, request, env);
-    }
-
-    return json({ error: "not_found" }, 404, request, env);
-  } catch (err) {
-    return json(
-      {
-        error: err?.message || "server_error",
-        details: err?.details || null
-      },
-      err?.statusCode || 500,
-      request,
-      env
+    return Date.now() - this.timeOrigin;
+  }
+  clearMarks(markName) {
+    this._entries = markName
+      ? this._entries.filter((e) => e.name !== markName)
+      : this._entries.filter((e) => e.entryType !== "mark");
+  }
+  clearMeasures(measureName) {
+    this._entries = measureName
+      ? this._entries.filter((e) => e.name !== measureName)
+      : this._entries.filter((e) => e.entryType !== "measure");
+  }
+  clearResourceTimings() {
+    this._entries = this._entries.filter(
+      (e) => e.entryType !== "resource" || e.entryType !== "navigation"
     );
   }
-}
-
-// ============================================================================
-// Config / helpers
-// ============================================================================
-
-function corsHeaders(request, env) {
-  const origin = request.headers.get("Origin") || "";
-  const allowed = (env.ALLOWED_ORIGINS || "").split(",").map(s => s.trim()).filter(Boolean);
-  const allowOrigin = allowed.includes(origin) ? origin : (env.PUBLIC_URL || "*");
-
-  return {
-    "Access-Control-Allow-Origin": allowOrigin,
-    "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
-    "Access-Control-Allow-Credentials": "true",
-    "Vary": "Origin"
-  };
-}
-
-function json(data, status = 200, request, env) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      ...corsHeaders(request, env),
-      "Cache-Control": "no-store"
+  getEntries() {
+    return this._entries;
+  }
+  getEntriesByName(name, type) {
+    return this._entries.filter((e) => e.name === name && (!type || e.entryType === type));
+  }
+  getEntriesByType(type) {
+    return this._entries.filter((e) => e.entryType === type);
+  }
+  mark(name, options) {
+    const entry = new PerformanceMark(name, options);
+    this._entries.push(entry);
+    return entry;
+  }
+  measure(measureName, startOrMeasureOptions, endMark) {
+    let start;
+    let end;
+    if (typeof startOrMeasureOptions === "string") {
+      start = this.getEntriesByName(startOrMeasureOptions, "mark")[0]?.startTime;
+      end = this.getEntriesByName(endMark, "mark")[0]?.startTime;
+    } else {
+      start = Number.parseFloat(startOrMeasureOptions?.start) || this.now();
+      end = Number.parseFloat(startOrMeasureOptions?.end) || this.now();
     }
+    const entry = new PerformanceMeasure(measureName, {
+      startTime: start,
+      detail: { start, end },
+    });
+    this._entries.push(entry);
+    return entry;
+  }
+  setResourceTimingBufferSize(maxSize) {
+    this._resourceTimingBufferSize = maxSize;
+  }
+  addEventListener(_type, _listener, _options) {
+    throw createNotImplementedError("Performance.addEventListener");
+  }
+  removeEventListener(_type, _listener, _options) {
+    throw createNotImplementedError("Performance.removeEventListener");
+  }
+  dispatchEvent(_event) {
+    throw createNotImplementedError("Performance.dispatchEvent");
+  }
+  toJSON() {
+    return this;
+  }
+};
+
+var PerformanceObserver = class {
+  static {
+    __name(this, "PerformanceObserver");
+  }
+  __unenv__ = true;
+  static supportedEntryTypes = [];
+  _callback = null;
+  constructor(callback) {
+    this._callback = callback;
+  }
+  takeRecords() {
+    return [];
+  }
+  disconnect() {
+    throw createNotImplementedError("PerformanceObserver.disconnect");
+  }
+  observe(_options) {
+    throw createNotImplementedError("PerformanceObserver.observe");
+  }
+  bind(fn) {
+    return fn;
+  }
+  runInAsyncScope(fn, thisArg, ...args) {
+    return fn.call(thisArg, ...args);
+  }
+  asyncId() {
+    return 0;
+  }
+  triggerAsyncId() {
+    return 0;
+  }
+  emitDestroy() {
+    return this;
+  }
+};
+
+var performance =
+  globalThis.performance && "addEventListener" in globalThis.performance
+    ? globalThis.performance
+    : new Performance();
+
+globalThis.performance = performance;
+globalThis.Performance = Performance;
+globalThis.PerformanceEntry = PerformanceEntry;
+globalThis.PerformanceMark = PerformanceMark;
+globalThis.PerformanceMeasure = PerformanceMeasure;
+globalThis.PerformanceObserver = PerformanceObserver;
+globalThis.PerformanceObserverEntryList = PerformanceObserverEntryList;
+globalThis.PerformanceResourceTiming = PerformanceResourceTiming;
+
+// src/worker.js
+function getSupabase(env) {
+  const url = env.SUPABASE_URL;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+  return { url, key };
+}
+__name(getSupabase, "getSupabase");
+
+var VERSION = "4.1.0";
+var ADMIN_EMAIL = "heylarmahtech@outlook.com";
+
+var CURRENCIES = {
+  NGN: { decimals: 2, scale: 100n },
+  BTC: { decimals: 8, scale: 100000000n },
+  ETH: { decimals: 8, scale: 100000000n },
+  BNB: { decimals: 8, scale: 100000000n },
+  USDT: { decimals: 6, scale: 1000000n },
+  TRX: { decimals: 6, scale: 1000000n },
+};
+
+var NETWORKS = {
+  BTC: ["BTC"],
+  ETH: ["ERC20", "Arbitrum", "Optimism", "Base"],
+  USDT: ["ERC20", "TRC20", "BEP20", "Polygon"],
+  BNB: ["BEP20", "BEP2"],
+  TRX: ["TRC20"],
+};
+
+var PAIRS = ["BTCNGN", "ETHNGN", "USDTNGN", "BNBNGN", "TRXNGN"];
+
+function parseToAtomic(currency, input) {
+  const cfg = CURRENCIES[currency];
+  if (!cfg) throw new Error("Unsupported currency: " + currency);
+  const s = String(input ?? "").trim();
+  if (!s || !/^\d+(\.\d+)?$/.test(s)) throw new Error("Invalid amount");
+  const [iPart, fPartRaw = ""] = s.split(".");
+  if (fPartRaw.length > cfg.decimals) throw new Error(`Max ${cfg.decimals} decimals for ${currency}`);
+  const fPart = (fPartRaw + "0".repeat(cfg.decimals)).slice(0, cfg.decimals);
+  return BigInt(iPart) * cfg.scale + BigInt(fPart || "0");
+}
+__name(parseToAtomic, "parseToAtomic");
+
+function formatAtomic(currency, atomic) {
+  const cfg = CURRENCIES[currency];
+  if (!cfg) return String(atomic);
+  const a = BigInt(atomic);
+  const sign = a < 0n ? "-" : "";
+  const v = a < 0n ? -a : a;
+  const i = v / cfg.scale;
+  const f = v % cfg.scale;
+  const fStr = f.toString().padStart(cfg.decimals, "0").replace(/0+$/, "");
+  return fStr ? `${sign}${i}.${fStr}` : `${sign}${i}`;
+}
+__name(formatAtomic, "formatAtomic");
+
+var H = __name((env) => {
+  const { key } = getSupabase(env);
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+  };
+}, "H");
+
+async function dbSelect(env, table, query = "") {
+  const { url } = getSupabase(env);
+  const r = await fetch(`${url}/rest/v1/${table}?${query}`, { headers: H(env) });
+  if (!r.ok) throw new Error(`SELECT ${table}: ${await r.text()}`);
+  return r.json();
+}
+__name(dbSelect, "dbSelect");
+
+async function dbInsert(env, table, data, ret = true) {
+  const { url } = getSupabase(env);
+  const r = await fetch(`${url}/rest/v1/${table}`, {
+    method: "POST",
+    headers: { ...H(env), Prefer: ret ? "return=representation" : "return=minimal" },
+    body: JSON.stringify(data),
   });
+  if (!r.ok) throw new Error(`INSERT ${table}: ${await r.text()}`);
+  return ret ? r.json() : null;
 }
+__name(dbInsert, "dbInsert");
 
-async function readJson(request) {
-  const text = await request.text();
-  if (!text) return {};
-  return JSON.parse(text);
+async function dbUpdate(env, table, query, data) {
+  const { url } = getSupabase(env);
+  const r = await fetch(`${url}/rest/v1/${table}?${query}`, {
+    method: "PATCH",
+    headers: { ...H(env), Prefer: "return=minimal" },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) throw new Error(`UPDATE ${table}: ${await r.text()}`);
 }
+__name(dbUpdate, "dbUpdate");
 
-function requireEnv(env, key) {
-  if (!env[key]) throw new Error(`missing_env_${key}`);
-  return env[key];
+async function dbUpsert(env, table, data) {
+  const { url } = getSupabase(env);
+  const r = await fetch(`${url}/rest/v1/${table}`, {
+    method: "POST",
+    headers: { ...H(env), Prefer: "return=representation,resolution=merge-duplicates" },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) throw new Error(`UPSERT ${table}: ${await r.text()}`);
+  return r.json();
 }
+__name(dbUpsert, "dbUpsert");
 
-function b64urlToBytes(input) {
-  const pad = "=".repeat((4 - (input.length % 4)) % 4);
-  const b64 = (input + pad).replace(/-/g, "+").replace(/_/g, "/");
-  const bin = atob(b64);
-  return Uint8Array.from(bin, c => c.charCodeAt(0));
+async function dbRpc(env, fn, args) {
+  const { url } = getSupabase(env);
+  const r = await fetch(`${url}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: { ...H(env), Prefer: "return=representation" },
+    body: JSON.stringify(args),
+  });
+  if (!r.ok) throw new Error(`RPC ${fn}: ${await r.text()}`);
+  return r.json();
 }
+__name(dbRpc, "dbRpc");
 
-function bytesToB64url(bytes) {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+async function dbDelete(env, table, query) {
+  const { url } = getSupabase(env);
+  const r = await fetch(`${url}/rest/v1/${table}?${query}`, {
+    method: "DELETE",
+    headers: H(env),
+  });
+  if (!r.ok) throw new Error(`DELETE ${table}: ${await r.text()}`);
 }
+__name(dbDelete, "dbDelete");
 
 async function signJwt(payload, secret) {
-  const enc = new TextEncoder();
-  const header = { alg: "HS256", typ: "JWT" };
-  const h = bytesToB64url(enc.encode(JSON.stringify(header)));
-  const p = bytesToB64url(enc.encode(JSON.stringify(payload)));
-  const data = `${h}.${p}`;
-
+  const enc = __name(
+    (o) =>
+      btoa(JSON.stringify(o))
+        .replace(/=/g, "")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_"),
+    "enc"
+  );
+  const data = `${enc({ alg: "HS256", typ: "JWT" })}.${enc(payload)}`;
   const key = await crypto.subtle.importKey(
     "raw",
-    enc.encode(secret),
+    new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"]
   );
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
-  return `${data}.${bytesToB64url(new Uint8Array(sig))}`;
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data));
+  const b64 = btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+  return `${data}.${b64}`;
 }
+__name(signJwt, "signJwt");
 
 async function verifyJwt(token, secret) {
-  const enc = new TextEncoder();
   const parts = token.split(".");
-  if (parts.length !== 3) throw Object.assign(new Error("invalid_token"), { statusCode: 401 });
-
+  if (parts.length !== 3) throw new Error("Invalid token");
   const [h, p, s] = parts;
-  const data = `${h}.${p}`;
-
   const key = await crypto.subtle.importKey(
     "raw",
-    enc.encode(secret),
+    new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["verify"]
   );
-
-  const ok = await crypto.subtle.verify("HMAC", key, b64urlToBytes(s), enc.encode(data));
-  if (!ok) throw Object.assign(new Error("invalid_token_signature"), { statusCode: 401 });
-
-  const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(p)));
-  const now = Math.floor(Date.now() / 1000);
-  if (payload.exp && payload.exp < now) {
-    throw Object.assign(new Error("token_expired"), { statusCode: 401 });
+  const sig = Uint8Array.from(
+    atob(s.replace(/-/g, "+").replace(/_/g, "/")),
+    (c) => c.charCodeAt(0)
+  );
+  const ok = await crypto.subtle.verify(
+    "HMAC",
+    key,
+    sig,
+    new TextEncoder().encode(`${h}.${p}`)
+  );
+  if (!ok) throw new Error("Invalid signature");
+  const payload = JSON.parse(atob(p.replace(/-/g, "+").replace(/_/g, "/")));
+  if (payload.exp && payload.exp < Math.floor(Date.now() / 1e3)) {
+    throw new Error("Token expired");
   }
   return payload;
 }
+__name(verifyJwt, "verifyJwt");
 
-function bearerToken(request) {
-  const auth = request.headers.get("Authorization") || "";
-  if (!auth.startsWith("Bearer ")) return null;
-  return auth.slice(7).trim();
-}
-
-async function requireAuth(request, env) {
-  const token = bearerToken(request);
-  if (!token) throw Object.assign(new Error("missing_authorization"), { statusCode: 401 });
-  const payload = await verifyJwt(token, requireEnv(env, "JWT_SECRET"));
-  return payload;
-}
-
-async function requireAdmin(request, env) {
-  const auth = await requireAuth(request, env);
-  if (!(auth.role === "admin" && (auth.email || "").toLowerCase() === (env.ADMIN_EMAIL || "heylarmahtech@outlook.com").toLowerCase())) {
-    throw Object.assign(new Error("admin_only"), { statusCode: 403 });
-  }
-  return auth;
-}
-
-function nowSeconds() {
-  return Math.floor(Date.now() / 1000);
-}
-
-function newAppTokenPayload(profile) {
-  return {
-    sub: profile.id,
-    uid: profile.id,
-    email: profile.email,
-    role: profile.role,
-    iat: nowSeconds(),
-    exp: nowSeconds() + 60 * 60 * 24 * 7
-  };
-}
-
-function makeReference(prefix = "HLX") {
-  return `${prefix}_${Date.now()}_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
-}
-
-async function sha256Hex(input) {
-  const enc = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest("SHA-256", enc);
-  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function hmacSHA512Hex(secret, payload) {
-  const enc = new TextEncoder();
+async function hashPwd(pwd) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const sHex = Array.from(salt)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
   const key = await crypto.subtle.importKey(
     "raw",
-    enc.encode(secret),
-    { name: "HMAC", hash: "SHA-512" },
+    new TextEncoder().encode(pwd),
+    "PBKDF2",
     false,
-    ["sign"]
+    ["deriveBits"]
   );
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(payload));
-  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+    key,
+    256
+  );
+  const hHex = Array.from(new Uint8Array(bits))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `pbkdf2:${sHex}:${hHex}`;
 }
+__name(hashPwd, "hashPwd");
 
-function qp(params = {}) {
-  const s = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) s.set(k, String(v));
-  });
-  return s.toString();
+async function verifyPwd(pwd, stored) {
+  if (!stored || stored.startsWith("$2")) return false;
+  const [, sHex, hHex] = stored.split(":");
+  const salt = Uint8Array.from(sHex.match(/.{2}/g).map((b) => parseInt(b, 16)));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(pwd),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+    key,
+    256
+  );
+  const comp = Array.from(new Uint8Array(bits))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return comp === hHex;
 }
+__name(verifyPwd, "verifyPwd");
 
-// ============================================================================
-// Supabase REST / Auth
-// ============================================================================
+var DEFAULT_ALLOWED_ORIGINS = [
+  "https://heylarmah-exchange.pages.dev",
+  "https://heylarmah-exchange.brownstonetberesearch.workers.dev",
+];
 
-function supabaseBase(env) {
-  return requireEnv(env, "SUPABASE_URL").replace(/\/+$/, "");
+function normalizeOrigin(value = "") {
+  return String(value || "").trim().replace(/\/+$/, "");
 }
+__name(normalizeOrigin, "normalizeOrigin");
 
-function anonOrServiceKey(env) {
-  return env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
+function getAllowedOrigins(env) {
+  const raw = env.ALLOWED_ORIGINS || DEFAULT_ALLOWED_ORIGINS.join(",");
+  return raw.split(",").map(normalizeOrigin).filter(Boolean);
 }
+__name(getAllowedOrigins, "getAllowedOrigins");
 
-async function sbFetch(env, path, options = {}, useServiceRole = true) {
-  const apiKey = useServiceRole ? requireEnv(env, "SUPABASE_SERVICE_ROLE_KEY") : anonOrServiceKey(env);
-  const headers = {
-    "apikey": apiKey,
-    "Authorization": `Bearer ${apiKey}`,
-    ...(options.headers || {})
+function getRequestOrigin(request) {
+  return normalizeOrigin(request.headers.get("Origin") || "");
+}
+__name(getRequestOrigin, "getRequestOrigin");
+
+function isOriginAllowed(request, env) {
+  const origin = getRequestOrigin(request);
+  if (!origin) return true;
+  return getAllowedOrigins(env).includes(origin);
+}
+__name(isOriginAllowed, "isOriginAllowed");
+
+function getCorsOrigin(request, env) {
+  const origin = getRequestOrigin(request);
+  if (!origin) return null;
+  return getAllowedOrigins(env).includes(origin) ? origin : null;
+}
+__name(getCorsOrigin, "getCorsOrigin");
+
+function buildResponseHeaders(request, env, extra = {}) {
+  const allowOrigin = getCorsOrigin(request, env);
+  return {
+    "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Paystack-Signature",
+    "Access-Control-Allow-Methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    Vary: "Origin",
+    ...(allowOrigin ? { "Access-Control-Allow-Origin": allowOrigin } : {}),
+    ...extra,
   };
-
-  const res = await fetch(`${supabaseBase(env)}${path}`, {
-    ...options,
-    headers
-  });
-
-  const text = await res.text();
-  let body;
-  try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
-
-  if (!res.ok) {
-    const err = new Error(body?.msg || body?.message || body?.error_description || body?.error || "supabase_request_failed");
-    err.statusCode = res.status;
-    err.details = body;
-    throw err;
-  }
-
-  return body;
 }
+__name(buildResponseHeaders, "buildResponseHeaders");
 
-async function sbSelect(env, table, query = "", useServiceRole = true) {
-  return sbFetch(env, `/rest/v1/${table}${query ? `?${query}` : ""}`, {
-    method: "GET",
-    headers: {
-      "Accept": "application/json"
-    }
-  }, useServiceRole);
+async function getUserRecord(env, userId) {
+  const rows = await dbSelect(
+    env,
+    "users",
+    `id=eq.${userId}&select=id,email,role,full_name,phone,is_suspended,created_at,last_login_at`
+  );
+  return rows[0] || null;
 }
+__name(getUserRecord, "getUserRecord");
 
-async function sbInsert(env, table, rows, useServiceRole = true) {
-  return sbFetch(env, `/rest/v1/${table}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Prefer": "return=representation"
-    },
-    body: JSON.stringify(Array.isArray(rows) ? rows : [rows])
-  }, useServiceRole);
+function isAdminRecord(userRow) {
+  return (
+    !!userRow &&
+    userRow.role === "admin" &&
+    String(userRow.email || "").toLowerCase() === ADMIN_EMAIL
+  );
 }
+__name(isAdminRecord, "isAdminRecord");
 
-async function sbUpsert(env, table, rows, onConflict = "", useServiceRole = true) {
-  const query = onConflict ? `?on_conflict=${encodeURIComponent(onConflict)}` : "";
-  return sbFetch(env, `/rest/v1/${table}${query}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Prefer": "resolution=merge-duplicates,return=representation"
-    },
-    body: JSON.stringify(Array.isArray(rows) ? rows : [rows])
-  }, useServiceRole);
-}
+async function getAuthContext(request, env) {
+  const auth = request.headers.get("Authorization") || "";
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  if (!m) return null;
 
-async function sbPatch(env, table, filterQuery, patch, useServiceRole = true) {
-  return sbFetch(env, `/rest/v1/${table}?${filterQuery}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "Prefer": "return=representation"
-    },
-    body: JSON.stringify(patch)
-  }, useServiceRole);
-}
-
-async function sbRpc(env, fn, args = {}, useServiceRole = true) {
-  return sbFetch(env, `/rest/v1/rpc/${fn}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(args)
-  }, useServiceRole);
-}
-
-async function sbAuthPasswordGrant(env, email, password) {
-  return sbFetch(env, `/auth/v1/token?grant_type=password`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": anonOrServiceKey(env),
-      "Authorization": `Bearer ${anonOrServiceKey(env)}`
-    },
-    body: JSON.stringify({ email, password })
-  }, false);
-}
-
-async function sbAuthCreateUser(env, email, password, metadata = {}) {
-  return sbFetch(env, `/auth/v1/admin/users`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: metadata
-    })
-  }, true);
-}
-
-async function sbAuthUpdateUserPassword(env, userId, password) {
-  return sbFetch(env, `/auth/v1/admin/users/${userId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password })
-  }, true);
-}
-
-// ============================================================================
-// Auth routes
-// ============================================================================
-
-async function registerUser(body, request, env) {
-  const email = String(body.email || "").trim().toLowerCase();
-  const password = String(body.password || "");
-  const fullName = String(body.fullName || "").trim();
-  const phone = String(body.phone || "").trim();
-
-  if (!email || !password) {
-    return json({ error: "email_and_password_required" }, 400, request, env);
-  }
-  if (password.length < 8) {
-    return json({ error: "password_must_be_at_least_8_characters" }, 400, request, env);
-  }
-
-  await sbAuthCreateUser(env, email, password, { full_name: fullName, phone });
-
-  const login = await sbAuthPasswordGrant(env, email, password);
-  const profile = await getProfileByEmail(env, email);
-
-  const token = await signJwt(newAppTokenPayload(profile), requireEnv(env, "JWT_SECRET"));
-
-  return json({
-    ok: true,
-    token,
-    user: {
-      id: profile.id,
-      email: profile.email,
-      role: profile.role,
-      full_name: profile.full_name,
-      phone: profile.phone
-    },
-    supabase: {
-      access_token: login.access_token,
-      refresh_token: login.refresh_token
-    }
-  }, 200, request, env);
-}
-
-async function loginUser(body, request, env) {
-  const email = String(body.email || "").trim().toLowerCase();
-  const password = String(body.password || "");
-
-  if (!email || !password) {
-    return json({ error: "email_and_password_required" }, 400, request, env);
-  }
-
-  const login = await sbAuthPasswordGrant(env, email, password);
-  const profile = await getProfileByEmail(env, email);
-
-  if (profile.is_disabled) {
-    return json({ error: "account_disabled" }, 403, request, env);
-  }
-
-  await sbRpc(env, "record_login", { p_user_id: profile.id });
-
-  const token = await signJwt(newAppTokenPayload(profile), requireEnv(env, "JWT_SECRET"));
-
-  return json({
-    ok: true,
-    token,
-    user: {
-      id: profile.id,
-      email: profile.email,
-      role: profile.role,
-      full_name: profile.full_name,
-      phone: profile.phone,
-      kyc_status: profile.kyc_status
-    },
-    supabase: {
-      access_token: login.access_token,
-      refresh_token: login.refresh_token
-    }
-  }, 200, request, env);
-}
-
-async function forgotPassword(body, request, env) {
-  const email = String(body.email || "").trim().toLowerCase();
-  if (!email) return json({ error: "email_required" }, 400, request, env);
-
-  const users = await sbSelect(env, "profiles", qp({
-    select: "id,email,full_name",
-    email: `eq.${email}`,
-    limit: 1
-  }));
-
-  if (!users.length) {
-    return json({ ok: true, message: "If that email exists, a reset link has been sent." }, 200, request, env);
-  }
-
-  const user = users[0];
-  const rawToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
-  const tokenHash = await sha256Hex(rawToken);
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 30).toISOString();
-
-  await sbInsert(env, "password_reset_tokens", {
-    user_id: user.id,
-    token_hash: tokenHash,
-    expires_at: expiresAt
-  });
-
-  const resetUrl = `${env.PUBLIC_URL || ""}/reset-password.html?token=${encodeURIComponent(rawToken)}`;
-
-  if (env.RESEND_API_KEY) {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        from: env.RESEND_FROM || "Hey Larmah Exchange <onboarding@resend.dev>",
-        to: [email],
-        subject: "Reset your Hey Larmah Exchange password",
-        html: `
-          <div style="font-family:Arial,sans-serif;line-height:1.6">
-            <h2>Reset your password</h2>
-            <p>Hello ${escapeHtml(user.full_name || email)},</p>
-            <p>Use the link below to reset your password. This link expires in 30 minutes.</p>
-            <p><a href="${resetUrl}">${resetUrl}</a></p>
-            <p>If you did not request this, ignore this email.</p>
-          </div>
-        `
-      })
-    });
-  }
-
-  return json({
-    ok: true,
-    message: "If that email exists, a reset link has been sent."
-  }, 200, request, env);
-}
-
-async function resetPassword(body, request, env) {
-  const rawToken = String(body.token || "");
-  const password = String(body.password || "");
-  if (!rawToken || !password) return json({ error: "token_and_password_required" }, 400, request, env);
-  if (password.length < 8) return json({ error: "password_must_be_at_least_8_characters" }, 400, request, env);
-
-  const tokenHash = await sha256Hex(rawToken);
-  const rows = await sbSelect(env, "password_reset_tokens", qp({
-    select: "id,user_id,expires_at,used_at",
-    token_hash: `eq.${tokenHash}`,
-    order: "id.desc",
-    limit: 1
-  }));
-
-  if (!rows.length) return json({ error: "invalid_reset_token" }, 400, request, env);
-
-  const row = rows[0];
-  if (row.used_at) return json({ error: "reset_token_already_used" }, 400, request, env);
-  if (new Date(row.expires_at).getTime() < Date.now()) return json({ error: "reset_token_expired" }, 400, request, env);
-
-  await sbAuthUpdateUserPassword(env, row.user_id, password);
-  await sbPatch(env, "password_reset_tokens", `id=eq.${row.id}`, { used_at: new Date().toISOString() });
-
-  return json({ ok: true, message: "Password updated successfully." }, 200, request, env);
-}
-
-async function getMe(auth, request, env) {
-  const profile = await getProfileById(env, auth.uid);
-  return json({
-    ok: true,
-    user: profile
-  }, 200, request, env);
-}
-
-// ============================================================================
-// User data routes
-// ============================================================================
-
-async function getWallets(auth, request, env) {
-  const rows = await sbSelect(env, "wallets", qp({
-    select: "currency,available,locked,updated_at",
-    user_id: `eq.${auth.uid}`,
-    order: "currency.asc"
-  }));
-
-  return json({ ok: true, wallets: rows }, 200, request, env);
-}
-
-async function getRates(request, env) {
-  const rows = await sbSelect(env, "rates", qp({
-    select: "pair,rate_ngn,is_active,updated_at",
-    is_active: "eq.true",
-    order: "pair.asc"
-  }));
-
-  return json({ ok: true, rates: rows }, 200, request, env);
-}
-
-async function getAnnouncements(request, env) {
-  const rows = await sbSelect(env, "announcements", qp({
-    select: "id,title,body,kind,is_active,created_at",
-    is_active: "eq.true",
-    order: "id.desc",
-    limit: 5
-  }));
-
-  return json({ ok: true, announcements: rows }, 200, request, env);
-}
-
-async function executeSwap(auth, body, request, env) {
-  const ref = makeReference("SWAP");
-  const result = await sbRpc(env, "execute_swap", {
-    p_from_currency: String(body.from || "").toUpperCase(),
-    p_to_currency: String(body.to || "").toUpperCase(),
-    p_amount: Number(body.amount || 0),
-    p_reference: ref
-  }, trueWithUserJwt(auth, env));
-
-  return json({ ok: true, reference: ref, result }, 200, request, env);
-}
-
-async function placeOrder(auth, body, request, env) {
-  const result = await sbRpc(env, "place_order", {
-    p_pair: String(body.pair || "").toUpperCase(),
-    p_side: String(body.side || "").toLowerCase(),
-    p_price: Number(body.price || 0),
-    p_amount: Number(body.amount || 0)
-  }, trueWithUserJwt(auth, env));
-
-  return json({ ok: true, result }, 200, request, env);
-}
-
-async function getOrders(auth, request, env) {
-  const rows = await sbSelect(env, "orders", qp({
-    select: "id,pair,side,price,amount,remaining,status,created_at",
-    user_id: `eq.${auth.uid}`,
-    order: "id.desc"
-  }));
-
-  return json({ ok: true, orders: rows }, 200, request, env);
-}
-
-async function cancelOrder(auth, id, request, env) {
-  const result = await sbRpc(env, "cancel_order", {
-    p_order_id: id
-  }, trueWithUserJwt(auth, env));
-
-  return json({ ok: true, result }, 200, request, env);
-}
-
-async function getTrades(auth, url, request, env) {
-  const pair = (url.searchParams.get("pair") || "").toUpperCase();
-
-  if (pair) {
-    const rows = await sbSelect(env, "trades", qp({
-      select: "id,pair,price,amount,created_at",
-      pair: `eq.${pair}`,
-      order: "id.desc",
-      limit: 100
-    }));
-    return json({ ok: true, trades: rows }, 200, request, env);
-  }
-
-  const rows = await sbSelect(env, "trades", qp({
-    select: "id,pair,price,amount,created_at,buyer_user_id,seller_user_id",
-    or: `(buyer_user_id.eq.${auth.uid},seller_user_id.eq.${auth.uid})`,
-    order: "id.desc",
-    limit: 100
-  }));
-
-  return json({ ok: true, trades: rows }, 200, request, env);
-}
-
-async function getLedger(auth, request, env) {
-  const rows = await sbSelect(env, "ledger", qp({
-    select: "id,currency,entry_type,amount,balance_available_after,balance_locked_after,reference,meta,created_at",
-    user_id: `eq.${auth.uid}`,
-    order: "id.desc",
-    limit: 200
-  }));
-
-  return json({ ok: true, ledger: rows }, 200, request, env);
-}
-
-async function submitKyc(auth, body, request, env) {
-  const result = await sbRpc(env, "submit_kyc", {
-    p_doc_type: String(body.docType || ""),
-    p_doc_number: String(body.docNumber || "")
-  }, trueWithUserJwt(auth, env));
-
-  return json({ ok: true, kyc: result }, 200, request, env);
-}
-
-async function getWithdrawals(auth, request, env) {
-  const rows = await sbSelect(env, "withdrawals", qp({
-    select: "id,currency,network,amount,destination,status,review_note,created_at,reviewed_at",
-    user_id: `eq.${auth.uid}`,
-    order: "id.desc",
-    limit: 100
-  }));
-
-  return json({ ok: true, withdrawals: rows }, 200, request, env);
-}
-
-async function requestWithdrawalNgn(auth, body, request, env) {
-  const result = await sbRpc(env, "request_withdrawal_ngn", {
-    p_amount: Number(body.amount || 0),
-    p_bank_code: String(body.bankCode || ""),
-    p_account_number: String(body.accountNumber || ""),
-    p_account_name: String(body.accountName || "")
-  }, trueWithUserJwt(auth, env));
-
-  return json({ ok: true, withdrawal: result }, 200, request, env);
-}
-
-async function requestWithdrawalCrypto(auth, body, request, env) {
-  const result = await sbRpc(env, "request_withdrawal_crypto", {
-    p_currency: String(body.currency || "").toUpperCase(),
-    p_network: String(body.network || ""),
-    p_amount: Number(body.amount || 0),
-    p_address: String(body.address || "")
-  }, trueWithUserJwt(auth, env));
-
-  return json({ ok: true, withdrawal: result }, 200, request, env);
-}
-
-async function getDepositAddress(auth, coin, network, request, env) {
-  const filters = {
-    select: "coin,network,address,is_active,created_at",
-    user_id: `eq.${auth.uid}`,
-    is_active: "eq.true",
-    limit: 1
-  };
-  if (coin) filters.coin = `eq.${coin.toUpperCase()}`;
-  if (network) filters.network = `eq.${network}`;
-
-  const rows = await sbSelect(env, "deposit_addresses", qp(filters));
-  return json({ ok: true, address: rows[0] || null }, 200, request, env);
-}
-
-// ============================================================================
-// Paystack routes
-// ============================================================================
-
-async function paystackInit(auth, body, request, env) {
-  const amountNgn = Number(body.amountNgn || body.amount || 0);
-  if (!Number.isFinite(amountNgn) || amountNgn < 100) {
-    return json({ error: "minimum_deposit_is_100_ngn" }, 400, request, env);
-  }
-
-  const profile = await getProfileById(env, auth.uid);
-  const reference = makeReference("PAY");
-  await sbInsert(env, "paystack_deposits", {
-    user_id: auth.uid,
-    reference,
-    amount_ngn: amountNgn,
-    paystack_status: "initialized"
-  });
-
-  const res = await fetch("https://api.paystack.co/transaction/initialize", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${requireEnv(env, "PAYSTACK_SECRET_KEY")}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      email: profile.email,
-      amount: Math.round(amountNgn * 100),
-      reference,
-      callback_url: `${env.PUBLIC_URL}/paystack_callback.html?ref=${encodeURIComponent(reference)}`
-    })
-  });
-
-  const data = await res.json();
-  if (!res.ok || !data?.status) {
-    return json({ error: data?.message || "paystack_init_failed" }, 400, request, env);
-  }
-
-  return json({
-    ok: true,
-    reference,
-    authorization_url: data.data.authorization_url,
-    access_code: data.data.access_code
-  }, 200, request, env);
-}
-
-async function paystackVerify(auth, reference, request, env) {
-  if (!reference) return json({ error: "reference_required" }, 400, request, env);
-
-  const depRows = await sbSelect(env, "paystack_deposits", qp({
-    select: "id,user_id,reference,amount_ngn,credited_at",
-    reference: `eq.${reference}`,
-    user_id: `eq.${auth.uid}`,
-    limit: 1
-  }));
-
-  if (!depRows.length) return json({ error: "deposit_reference_not_found" }, 404, request, env);
-
-  const res = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
-    headers: {
-      "Authorization": `Bearer ${requireEnv(env, "PAYSTACK_SECRET_KEY")}`
-    }
-  });
-
-  const data = await res.json();
-  if (!res.ok || !data?.status) {
-    return json({ error: data?.message || "paystack_verify_failed" }, 400, request, env);
-  }
-
-  const tx = data.data;
-  if (tx.status !== "success") {
-    return json({ error: `transaction_status_${tx.status}` }, 400, request, env);
-  }
-
-  const amountNgn = Number(tx.amount) / 100;
-  const result = await sbRpc(env, "credit_paystack_deposit", {
-    p_reference: reference,
-    p_amount_ngn: amountNgn,
-    p_raw_verify: tx
-  });
-
-  return json({
-    ok: true,
-    creditedNgn: amountNgn,
-    result
-  }, 200, request, env);
-}
-
-async function paystackWebhook(raw, request, env) {
-  const signature = request.headers.get("x-paystack-signature") || "";
-  const expected = await hmacSHA512Hex(requireEnv(env, "PAYSTACK_SECRET_KEY"), raw);
-
-  if (signature !== expected) {
-    return json({ error: "invalid_paystack_signature" }, 401, request, env);
-  }
-
-  let event;
   try {
-    event = JSON.parse(raw);
-  } catch {
-    return json({ error: "invalid_json" }, 400, request, env);
-  }
+    const p = await verifyJwt(m[1], env.JWT_SECRET);
+    const userRow = await getUserRecord(env, Number(p.sub));
+    if (!userRow) return null;
+    if (userRow.is_suspended) return null;
 
-  if (event?.event === "charge.success") {
-    const tx = event.data || {};
-    const reference = tx.reference;
-    const amountNgn = Number(tx.amount || 0) / 100;
-
-    try {
-      await sbRpc(env, "credit_paystack_deposit", {
-        p_reference: reference,
-        p_amount_ngn: amountNgn,
-        p_raw_verify: tx
-      });
-    } catch (err) {
-      // idempotent / safe to ignore if already credited or mismatched handled upstream
+    if (String(userRow.email || "").toLowerCase() === ADMIN_EMAIL && userRow.role !== "admin") {
+      await dbUpdate(env, "users", `id=eq.${userRow.id}`, { role: "admin" });
+      userRow.role = "admin";
     }
+
+    return {
+      id: Number(userRow.id),
+      email: userRow.email,
+      role: userRow.role,
+      isAdmin: isAdminRecord(userRow),
+      user: userRow,
+    };
+  } catch {
+    return null;
   }
-
-  return json({ ok: true }, 200, request, env);
 }
+__name(getAuthContext, "getAuthContext");
 
-// ============================================================================
-// Admin routes
-// ============================================================================
+async function getUser(request, env) {
+  return await getAuthContext(request, env);
+}
+__name(getUser, "getUser");
 
-async function adminStats(auth, request, env) {
-  const stats = await sbRpc(env, "admin_stats", {});
-  const rates = await sbSelect(env, "rates", qp({
-    select: "pair,rate_ngn,is_active,updated_at",
-    order: "pair.asc"
+async function ensureWallets(env, userId) {
+  const rows = Object.keys(CURRENCIES).map((c) => ({
+    user_id: userId,
+    currency: c,
+    available: "0",
+    locked: "0",
   }));
-  return json({ ok: true, stats, rates }, 200, request, env);
+  await dbUpsert(env, "wallets", rows);
 }
+__name(ensureWallets, "ensureWallets");
 
-async function adminUsers(auth, url, request, env) {
-  const q = (url.searchParams.get("q") || "").trim().toLowerCase();
-  let query = {
-    select: "id,email,full_name,phone,role,kyc_status,is_disabled,last_login_at,created_at",
-    order: "created_at.desc",
-    limit: 200
-  };
+function fmtWallets(rows) {
+  return rows.map((w) => ({
+    currency: w.currency,
+    available: formatAtomic(w.currency, BigInt(w.available)),
+    locked: formatAtomic(w.currency, BigInt(w.locked)),
+  }));
+}
+__name(fmtWallets, "fmtWallets");
 
-  if (q) {
-    query.or = `(email.ilike.*${q}*,full_name.ilike.*${q}*)`;
+function randomToken() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+__name(randomToken, "randomToken");
+
+var safeJson = __name((s) => {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
   }
+}, "safeJson");
 
-  const rows = await sbSelect(env, "vw_admin_users", qp(query));
-  return json({ ok: true, users: rows }, 200, request, env);
-}
+var worker_default = {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const method = request.method;
 
-async function adminKycPending(auth, request, env) {
-  const rows = await sbSelect(env, "vw_admin_kyc_queue", qp({
-    select: "*",
-    status: "eq.pending",
-    order: "created_at.asc",
-    limit: 200
-  }));
-  return json({ ok: true, items: rows }, 200, request, env);
-}
+    const PUBLIC_URL = env.PUBLIC_URL || "https://heylarmah-exchange.pages.dev";
+    const WORKER_URL =
+      env.WORKER_URL || "https://heylarmah-exchange.brownstonetberesearch.workers.dev";
+    const PAYSTACK_SECRET = env.PAYSTACK_SECRET_KEY || "";
+    const PAYSTACK_PUBLIC = env.PAYSTACK_PUBLIC_KEY || "";
+    const SWAP_FEE = parseInt(env.SWAP_FEE_BPS || "50", 10);
+    const TRADE_FEE = parseInt(env.TRADE_FEE_BPS || "20", 10);
 
-async function adminKycResolve(auth, url, body, request, env) {
-  const parts = url.pathname.split("/");
-  const id = Number(parts[4]);
-  const action = parts[5] === "approve" ? "approved" : "rejected";
+    if (!isOriginAllowed(request, env)) {
+      return new Response(JSON.stringify({ error: "Origin not allowed" }), {
+        status: 403,
+        headers: buildResponseHeaders(request, env, {
+          "Content-Type": "application/json; charset=utf-8",
+        }),
+      });
+    }
 
-  const result = await sbRpc(env, "admin_resolve_kyc", {
-    p_kyc_id: id,
-    p_decision: action,
-    p_note: String(body.note || "")
-  });
+    const J = __name(
+      (d, s = 200) =>
+        new Response(JSON.stringify(d), {
+          status: s,
+          headers: buildResponseHeaders(request, env, {
+            "Content-Type": "application/json; charset=utf-8",
+          }),
+        }),
+      "J"
+    );
 
-  return json({ ok: true, kyc: result }, 200, request, env);
-}
+    const E = __name((m, s = 400) => J({ error: m }, s), "E");
 
-async function adminWithdrawalsPending(auth, request, env) {
-  const rows = await sbSelect(env, "vw_admin_withdrawals_queue", qp({
-    select: "*",
-    status: "eq.pending",
-    order: "created_at.asc",
-    limit: 200
-  }));
-  return json({ ok: true, items: rows }, 200, request, env);
-}
+    if (method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: buildResponseHeaders(request, env) });
+    }
 
-async function adminWithdrawalResolve(auth, url, body, request, env) {
-  const parts = url.pathname.split("/");
-  const id = Number(parts[4]);
-  const action = parts[5] === "approve" ? "approved" : "rejected";
+    if (!path.startsWith("/api/")) {
+      if (env.ASSETS?.fetch) return env.ASSETS.fetch(request);
+      if (path === "/" || path === "") {
+        return J({
+          ok: true,
+          name: "Hey Larmah Exchange API",
+          v: VERSION,
+          appUrl: PUBLIC_URL,
+          apiUrl: WORKER_URL,
+          health: `${WORKER_URL}/api/health`,
+        });
+      }
+      return E("Not found", 404);
+    }
 
-  const result = await sbRpc(env, "admin_resolve_withdrawal", {
-    p_withdrawal_id: id,
-    p_decision: action,
-    p_note: String(body.note || "")
-  });
+    let rawBody = "";
+    let body = {};
+    if (["POST", "PATCH", "PUT"].includes(method)) {
+      try {
+        rawBody = await request.text();
+      } catch {}
+      if (rawBody && path !== "/api/paystack/webhook") {
+        try {
+          body = JSON.parse(rawBody);
+        } catch {}
+      }
+    }
 
-  return json({ ok: true, withdrawal: result }, 200, request, env);
-}
+    if (path === "/api/health") {
+      return J({
+        ok: true,
+        v: VERSION,
+        time: new Date().toISOString(),
+        appUrl: PUBLIC_URL,
+        apiUrl: WORKER_URL,
+      });
+    }
 
-async function adminSetRate(auth, body, request, env) {
-  const pair = String(body.pair || "").toUpperCase();
-  const rate = Number(body.rate || body.rate_ngn || 0);
-  if (!pair || rate <= 0) return json({ error: "pair_and_rate_required" }, 400, request, env);
+    if (path === "/api/prices" && method === "GET") {
+      try {
+        const r = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether,binancecoin,tron&vs_currencies=usd",
+          { headers: { Accept: "application/json" } }
+        );
+        const data = await r.json();
+        return J({
+          BTC: data.bitcoin?.usd || 0,
+          ETH: data.ethereum?.usd || 0,
+          USDT: data.tether?.usd || 1,
+          BNB: data.binancecoin?.usd || 0,
+          TRX: data.tron?.usd || 0,
+        });
+      } catch {
+        return J({ BTC: 0, ETH: 0, USDT: 1, BNB: 0, TRX: 0 });
+      }
+    }
 
-  const rows = await sbUpsert(env, "rates", {
-    pair,
-    rate_ngn: rate,
-    is_active: true,
-    updated_by: auth.uid
-  }, "pair");
+    if (path === "/api/auth/register" && method === "POST") {
+      try {
+        const email = String(body.email || "").toLowerCase().trim();
+        const password = String(body.password || "");
+        const fullName = String(body.fullName || "").trim();
+        const phone = String(body.phone || "").trim();
 
-  return json({ ok: true, rate: rows[0] || null }, 200, request, env);
-}
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) return E("Valid email required");
+        if (password.length < 8) return E("Password must be at least 8 characters");
 
-async function adminWalletCredit(auth, body, request, env) {
-  await sbRpc(env, "admin_credit_wallet", {
-    p_user_id: String(body.userId || body.user_id || ""),
-    p_currency: String(body.currency || "").toUpperCase(),
-    p_amount: Number(body.amount || 0),
-    p_reference: String(body.reference || makeReference("ADMINCR")),
-    p_meta: body.meta || {}
-  });
+        const ex = await dbSelect(env, "users", `email=eq.${encodeURIComponent(email)}&select=id`);
+        if (ex.length) return E("Email already registered", 409);
 
-  return json({ ok: true }, 200, request, env);
-}
+        const hash = await hashPwd(password);
+        const role = email === ADMIN_EMAIL ? "admin" : "user";
 
-async function adminWalletDebit(auth, body, request, env) {
-  await sbRpc(env, "admin_debit_wallet", {
-    p_user_id: String(body.userId || body.user_id || ""),
-    p_currency: String(body.currency || "").toUpperCase(),
-    p_amount: Number(body.amount || 0),
-    p_reference: String(body.reference || makeReference("ADMINDR")),
-    p_meta: body.meta || {}
-  });
+        const users = await dbInsert(env, "users", {
+          email,
+          password_hash: hash,
+          full_name: fullName || null,
+          phone: phone || null,
+          role,
+        });
 
-  return json({ ok: true }, 200, request, env);
-}
+        const user2 = users[0];
+        await ensureWallets(env, user2.id);
+        await dbUpsert(env, "kyc", { user_id: user2.id, status: "not_submitted" });
 
-async function adminDepositAddress(auth, body, request, env) {
-  const rows = await sbUpsert(env, "deposit_addresses", {
-    user_id: String(body.userId || body.user_id || ""),
-    coin: String(body.coin || "").toUpperCase(),
-    network: String(body.network || ""),
-    address: String(body.address || ""),
-    is_active: true,
-    created_by: auth.uid
-  }, "user_id,coin,network");
+        const token = await signJwt(
+          {
+            sub: user2.id,
+            role,
+            exp: Math.floor(Date.now() / 1e3) + 7 * 86400,
+          },
+          env.JWT_SECRET
+        );
 
-  return json({ ok: true, address: rows[0] || null }, 200, request, env);
-}
+        return J({
+          token,
+          user: {
+            id: user2.id,
+            email: user2.email,
+            role,
+            full_name: user2.full_name,
+            isAdmin: role === "admin" && email === ADMIN_EMAIL,
+          },
+        });
+      } catch (e) {
+        console.error(e);
+        return E("Server error", 500);
+      }
+    }
 
-async function adminAnnouncement(auth, body, request, env) {
-  const rows = await sbInsert(env, "announcements", {
-    title: String(body.title || ""),
-    body: String(body.body || ""),
-    kind: String(body.kind || body.type || "info"),
-    is_active: true,
-    created_by: auth.uid
-  });
+    if (path === "/api/auth/login" && method === "POST") {
+      try {
+        const email = String(body.email || "").toLowerCase().trim();
+        const password = String(body.password || "");
+        const rows = await dbSelect(env, "users", `email=eq.${encodeURIComponent(email)}`);
+        const user2 = rows[0];
 
-  return json({ ok: true, announcement: rows[0] || null }, 200, request, env);
-}
+        if (!user2) return E("Invalid email or password", 401);
+        if (user2.is_suspended) return E("Account suspended. Contact support.", 403);
 
-// ============================================================================
-// Internal helpers
-// ============================================================================
+        const valid = await verifyPwd(password, user2.password_hash);
+        if (!valid) {
+          if (user2.password_hash?.startsWith("$2")) {
+            return E("Please reset your password — contact support.", 401);
+          }
+          return E("Invalid email or password", 401);
+        }
 
-async function getProfileByEmail(env, email) {
-  const rows = await sbSelect(env, "profiles", qp({
-    select: "id,email,full_name,phone,role,kyc_status,is_disabled,created_at",
-    email: `eq.${email}`,
-    limit: 1
-  }));
-  if (!rows.length) throw Object.assign(new Error("profile_not_found"), { statusCode: 404 });
-  return rows[0];
-}
+        if (String(user2.email || "").toLowerCase() === ADMIN_EMAIL && user2.role !== "admin") {
+          await dbUpdate(env, "users", `id=eq.${user2.id}`, { role: "admin" });
+          user2.role = "admin";
+        }
 
-async function getProfileById(env, id) {
-  const rows = await sbSelect(env, "profiles", qp({
-    select: "id,email,full_name,phone,role,kyc_status,is_disabled,last_login_at,created_at",
-    id: `eq.${id}`,
-    limit: 1
-  }));
-  if (!rows.length) throw Object.assign(new Error("profile_not_found"), { statusCode: 404 });
-  return rows[0];
-}
+        await dbUpdate(env, "users", `id=eq.${user2.id}`, {
+          last_login_at: new Date().toISOString(),
+        });
 
-// Kept for future expansion if you want user-scoped REST with Supabase JWT.
-// For now the app routes mostly use service role + worker-side auth.
-function trueWithUserJwt() {
-  return true;
-}
+        await ensureWallets(env, user2.id);
 
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+        const token = await signJwt(
+          {
+            sub: user2.id,
+            role: user2.role,
+            exp: Math.floor(Date.now() / 1e3) + 7 * 86400,
+          },
+          env.JWT_SECRET
+        );
+
+        return J({
+          token,
+          user: {
+            id: user2.id,
+            email: user2.email,
+            role: user2.role,
+            full_name: user2.full_name,
+            phone: user2.phone,
+            created_at: user2.created_at,
+            isAdmin: isAdminRecord(user2),
+          },
+          paystackPublicKey: PAYSTACK_PUBLIC || null,
+        });
+      } catch (e) {
+        console.error(e);
+        return E("Server error", 500);
+      }
+    }
+
+    if (path === "/api/auth/forgot-password" && method === "POST") {
+      try {
+        const email = String(body.email || "").toLowerCase().trim();
+        const rows = await dbSelect(env, "users", `email=eq.${encodeURIComponent(email)}&select=id`);
+        if (rows.length) {
+          const token = randomToken();
+          const exp = new Date(Date.now() + 3600000).toISOString();
+          await dbDelete(env, "password_resets", `user_id=eq.${rows[0].id}`);
+          await dbInsert(env, "password_resets", { user_id: rows[0].id, token, expires_at: exp }, false);
+          console.log(`Password reset token for ${email}: ${token}`);
+
+          if (env.RESEND_API_KEY) {
+            await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${env.RESEND_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                from: env.RESEND_FROM || "Hey Larmah Exchange <onboarding@resend.dev>",
+                to: [email],
+                subject: "Reset your Hey Larmah Exchange password",
+                html: `<p>Click the link below to reset your password. This link expires in 1 hour.</p>
+                       <p><a href="${PUBLIC_URL}/reset-password.html?token=${token}">Reset Password</a></p>
+                       <p>If you did not request this, ignore this email.</p>`,
+              }),
+            });
+          }
+        }
+        return J({ ok: true, message: "If that email exists, a reset link has been sent." });
+      } catch (e) {
+        console.error(e);
+        return E("Server error", 500);
+      }
+    }
+
+    if (path === "/api/auth/reset-password" && method === "POST") {
+      try {
+        const token = String(body.token || "").trim();
+        const password = String(body.password || "");
+        if (!token) return E("Token required");
+        if (password.length < 8) return E("Password must be at least 8 characters");
+
+        const rows = await dbSelect(
+          env,
+          "password_resets",
+          `token=eq.${encodeURIComponent(token)}&used=eq.false`
+        );
+        const reset = rows[0];
+
+        if (!reset) return E("Invalid or expired reset token", 400);
+        if (new Date(reset.expires_at) < new Date()) return E("Reset token expired", 400);
+
+        const hash = await hashPwd(password);
+        await dbUpdate(env, "users", `id=eq.${reset.user_id}`, { password_hash: hash });
+        await dbUpdate(env, "password_resets", `token=eq.${encodeURIComponent(token)}`, {
+          used: true,
+        });
+
+        return J({ ok: true, message: "Password updated. You can now sign in." });
+      } catch (e) {
+        console.error(e);
+        return E("Server error", 500);
+      }
+    }
+
+    const user = await getUser(request, env);
+
+    if (path === "/api/me" && method === "GET") {
+      if (!user) return E("Unauthorized", 401);
+
+      const [u, k] = await Promise.all([
+        dbSelect(
+          env,
+          "users",
+          `id=eq.${user.id}&select=id,email,role,full_name,phone,created_at,last_login_at`
+        ),
+        dbSelect(env, "kyc", `user_id=eq.${user.id}&select=status`),
+      ]);
+
+      return J({
+        user: {
+          ...u[0],
+          isAdmin: isAdminRecord(u[0]),
+        },
+        kyc: { status: k[0]?.status || "not_submitted" },
+      });
+    }
+
+    if (path === "/api/me" && method === "PATCH") {
+      if (!user) return E("Unauthorized", 401);
+      const upd = {};
+      if (body.fullName !== void 0) upd.full_name = body.fullName || null;
+      if (body.phone !== void 0) upd.phone = body.phone || null;
+      await dbUpdate(env, "users", `id=eq.${user.id}`, upd);
+      return J({ ok: true });
+    }
+
+    if (path === "/api/wallets" && method === "GET") {
+      if (!user) return E("Unauthorized", 401);
+      await ensureWallets(env, user.id);
+      const rows = await dbSelect(env, "wallets", `user_id=eq.${user.id}`);
+      return J({ wallets: fmtWallets(rows) });
+    }
+
+    if (path === "/api/rates" && method === "GET") {
+      const rows = await dbSelect(env, "rates", "");
+      const fmt = rows.map((r) => {
+        const base = r.pair.replace("NGN", "");
+        return {
+          pair: r.pair,
+          currency: base,
+          rate_ngn_per_unit: formatAtomic("NGN", BigInt(r.rate)),
+          updated_at: r.updated_at,
+        };
+      });
+      return J({ rates: fmt, fees: { swap_bps: SWAP_FEE, trade_bps: TRADE_FEE } });
+    }
+
+    if (path === "/api/announcements" && method === "GET") {
+      const rows = await dbSelect(env, "announcements", "active=eq.true&order=id.desc&limit=10");
+      return J({
+        announcements: rows.map((a) => ({
+          id: a.id,
+          title: a.title,
+          body: a.body,
+          type: a.type,
+          created_at: a.created_at,
+        })),
+      });
+    }
+
+    if (path === "/api/market/orderbook" && method === "GET") {
+      const pair = (url.searchParams.get("pair") || "BTCNGN").toUpperCase();
+      if (!PAIRS.includes(pair)) return E("Unsupported pair");
+      const base = pair.replace("NGN", "");
+      const [asks, bids] = await Promise.all([
+        dbSelect(
+          env,
+          "orders",
+          `pair=eq.${pair}&side=eq.sell&status=eq.open&select=price,remaining&order=price.asc&limit=20`
+        ),
+        dbSelect(
+          env,
+          "orders",
+          `pair=eq.${pair}&side=eq.buy&status=eq.open&select=price,remaining&order=price.desc&limit=20`
+        ),
+      ]);
+
+      return J({
+        pair,
+        asks: asks.map((a) => ({
+          price_ngn: formatAtomic("NGN", BigInt(a.price)),
+          amount: formatAtomic(base, BigInt(a.remaining)),
+        })),
+        bids: bids.map((b) => ({
+          price_ngn: formatAtomic("NGN", BigInt(b.price)),
+          amount: formatAtomic(base, BigInt(b.remaining)),
+        })),
+      });
+    }
+
+    if (path === "/api/market/trades" && method === "GET") {
+      const pair = (url.searchParams.get("pair") || "BTCNGN").toUpperCase();
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "50", 10), 200);
+      const base = pair.replace("NGN", "");
+      const rows = await dbSelect(env, "trades", `pair=eq.${pair}&order=id.desc&limit=${limit}`);
+      return J({
+        trades: rows.map((t) => ({
+          id: t.id,
+          price_ngn: formatAtomic("NGN", BigInt(t.price)),
+          amount: formatAtomic(base, BigInt(t.amount)),
+          created_at: t.created_at,
+        })),
+      });
+    }
+
+    if (path === "/api/ledger" && method === "GET") {
+      if (!user) return E("Unauthorized", 401);
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "50", 10), 200);
+      const rows = await dbSelect(
+        env,
+        "ledger",
+        `user_id=eq.${user.id}&order=id.desc&limit=${limit}`
+      );
+      return J({
+        entries: rows.map((r) => ({
+          id: r.id,
+          type: r.type,
+          currency: r.currency,
+          amount: formatAtomic(r.currency, BigInt(r.amount)),
+          reference: r.reference,
+          created_at: r.created_at,
+        })),
+      });
+    }
+
+    if (path === "/api/orders" && method === "GET") {
+      if (!user) return E("Unauthorized", 401);
+      const pair = url.searchParams.get("pair");
+      let q = `user_id=eq.${user.id}&order=id.desc&limit=100`;
+      if (pair) q += `&pair=eq.${pair.toUpperCase()}`;
+      const rows = await dbSelect(env, "orders", q);
+      return J({
+        orders: rows.map((o) => {
+          const base = o.pair.replace("NGN", "");
+          return {
+            id: o.id,
+            pair: o.pair,
+            side: o.side,
+            status: o.status,
+            price_ngn: formatAtomic("NGN", BigInt(o.price)),
+            amount: formatAtomic(base, BigInt(o.amount)),
+            remaining: formatAtomic(base, BigInt(o.remaining)),
+            created_at: o.created_at,
+          };
+        }),
+      });
+    }
+
+    if (path === "/api/orders" && method === "POST") {
+      if (!user) return E("Unauthorized", 401);
+      try {
+        const pair = String(body.pair || "").toUpperCase();
+        const side = String(body.side || "").toLowerCase();
+        const priceStr = String(body.price || "");
+        const amountStr = String(body.amount || "");
+
+        if (!PAIRS.includes(pair)) return E("Unsupported pair");
+        if (!["buy", "sell"].includes(side)) return E("side must be buy or sell");
+
+        const base = pair.replace("NGN", "");
+        const priceAtomic = parseToAtomic("NGN", priceStr);
+        const amountAtomic = parseToAtomic(base, amountStr);
+
+        if (priceAtomic <= 0n || amountAtomic <= 0n) {
+          return E("price and amount must be > 0");
+        }
+
+        const result = await dbRpc(env, "place_order", {
+          p_user_id: user.id,
+          p_pair: pair,
+          p_side: side,
+          p_price: priceAtomic.toString(),
+          p_amount: amountAtomic.toString(),
+          p_fee_bps: TRADE_FEE,
+        });
+
+        return J({ ok: true, orderId: result.order_id });
+      } catch (e) {
+        return E(String(e.message || e));
+      }
+    }
+
+    if (path.match(/^\/api\/orders\/(\d+)\/cancel$/) && method === "POST") {
+      if (!user) return E("Unauthorized", 401);
+      const orderId = Number(path.match(/^\/api\/orders\/(\d+)\/cancel$/)[1]);
+      try {
+        await dbRpc(env, "cancel_order", { p_order_id: orderId, p_user_id: user.id });
+        return J({ ok: true });
+      } catch (e) {
+        return E(String(e.message || e));
+      }
+    }
+
+    if (path === "/api/swap" && method === "POST") {
+      if (!user) return E("Unauthorized", 401);
+      try {
+        const fromCur = String(body.fromCurrency || "").toUpperCase();
+        const toCur = String(body.toCurrency || "").toUpperCase();
+        const amtStr = String(body.amount || "");
+
+        if (!CURRENCIES[fromCur] || !CURRENCIES[toCur]) return E("Unsupported currency");
+        if (fromCur === toCur) return E("Currencies must differ");
+
+        const pair = fromCur === "NGN" ? `${toCur}NGN` : `${fromCur}NGN`;
+        if (!PAIRS.includes(pair)) return E("No rate for this pair");
+
+        const rates = await dbSelect(env, "rates", `pair=eq.${pair}`);
+        if (!rates.length) return E("Rate not available");
+
+        const rateKobo = BigInt(rates[0].rate);
+        const amtAtomic = parseToAtomic(fromCur, amtStr);
+        if (amtAtomic <= 0n) return E("Amount must be > 0");
+
+        const result = await dbRpc(env, "perform_swap", {
+          p_user_id: user.id,
+          p_from_currency: fromCur,
+          p_to_currency: toCur,
+          p_amount: amtAtomic.toString(),
+          p_rate: rateKobo.toString(),
+          p_fee_bps: SWAP_FEE,
+        });
+
+        return J({
+          ok: true,
+          from: {
+            currency: fromCur,
+            amount: formatAtomic(fromCur, BigInt(result.from_amount)),
+          },
+          to: {
+            currency: toCur,
+            amount: formatAtomic(toCur, BigInt(result.to_amount)),
+          },
+          fee: result.fee_amount,
+        });
+      } catch (e) {
+        return E(String(e.message || e));
+      }
+    }
+
+    if (path === "/api/deposit/address" && method === "GET") {
+      if (!user) return E("Unauthorized", 401);
+      const currency = (url.searchParams.get("currency") || "").toUpperCase();
+      const network = url.searchParams.get("network") || "";
+      if (!NETWORKS[currency]) return E("Unsupported currency");
+
+      const rows = await dbSelect(
+        env,
+        "deposit_addresses",
+        `user_id=eq.${user.id}&currency=eq.${currency}&network=eq.${encodeURIComponent(network)}`
+      );
+
+      return J({ address: rows[0]?.address || null, currency, network });
+    }
+
+    if (path === "/api/deposit/address" && method === "POST") {
+      if (!user) return E("Unauthorized", 401);
+
+      const targetUserId = user.isAdmin && body.userId ? Number(body.userId) : user.id;
+      const currency = String(body.currency || "").toUpperCase();
+      const network = String(body.network || "").trim();
+      const address = String(body.address || "").trim();
+
+      if (!NETWORKS[currency]) return E("Unsupported currency");
+      if (!address) return E("Address required");
+
+      await dbUpsert(env, "deposit_addresses", {
+        user_id: targetUserId,
+        currency,
+        network,
+        address,
+      });
+
+      return J({ ok: true });
+    }
+
+    if (path === "/api/withdrawals" && method === "GET") {
+      if (!user) return E("Unauthorized", 401);
+      const rows = await dbSelect(env, "withdrawals", `user_id=eq.${user.id}&order=id.desc&limit=100`);
+      return J({
+        withdrawals: rows.map((w) => ({
+          id: w.id,
+          currency: w.currency,
+          network: w.network,
+          amount: formatAtomic(w.currency, BigInt(w.amount)),
+          status: w.status,
+          destination: safeJson(w.destination_json),
+          created_at: w.created_at,
+          processed_at: w.processed_at,
+        })),
+      });
+    }
+
+    if (path === "/api/withdraw/naira" && method === "POST") {
+      if (!user) return E("Unauthorized", 401);
+      try {
+        const kycs = await dbSelect(env, "kyc", `user_id=eq.${user.id}&select=status`);
+        if (kycs[0]?.status !== "approved") return E("KYC approval required", 403);
+
+        const amtKobo = parseToAtomic("NGN", String(body.amountNgn || ""));
+        const bankCode = String(body.bankCode || "").trim();
+        const acctNum = String(body.accountNumber || "").trim();
+        const acctName = String(body.accountName || "").trim();
+
+        if (!bankCode || !acctNum || !acctName) {
+          return E("bankCode, accountNumber, accountName required");
+        }
+        if (amtKobo <= 0n) return E("Amount must be > 0");
+
+        const result = await dbRpc(env, "request_withdrawal", {
+          p_user_id: user.id,
+          p_currency: "NGN",
+          p_amount: amtKobo.toString(),
+          p_destination: JSON.stringify({
+            bankCode,
+            accountNumber: acctNum,
+            accountName: acctName,
+          }),
+        });
+
+        return J({ ok: true, withdrawalId: result.withdrawal_id });
+      } catch (e) {
+        return E(String(e.message || e));
+      }
+    }
+
+    if (path === "/api/withdraw/crypto" && method === "POST") {
+      if (!user) return E("Unauthorized", 401);
+      try {
+        const kycs = await dbSelect(env, "kyc", `user_id=eq.${user.id}&select=status`);
+        if (kycs[0]?.status !== "approved") return E("KYC approval required", 403);
+
+        const currency = String(body.currency || "BTC").toUpperCase();
+        const network = String(body.network || "").trim();
+        const address = String(body.address || "").trim();
+
+        if (!NETWORKS[currency]) return E("Unsupported currency");
+        if (!address) return E("Wallet address required");
+
+        const amtAtomic = parseToAtomic(currency, String(body.amount || ""));
+        if (amtAtomic <= 0n) return E("Amount must be > 0");
+
+        const result = await dbRpc(env, "request_withdrawal", {
+          p_user_id: user.id,
+          p_currency: currency,
+          p_amount: amtAtomic.toString(),
+          p_destination: JSON.stringify({ address, network }),
+          p_network: network,
+        });
+
+        return J({ ok: true, withdrawalId: result.withdrawal_id });
+      } catch (e) {
+        return E(String(e.message || e));
+      }
+    }
+
+    if (path === "/api/kyc/status" && method === "GET") {
+      if (!user) return E("Unauthorized", 401);
+      const k = await dbSelect(env, "kyc", `user_id=eq.${user.id}&select=status,submitted_at,reviewed_at`);
+      return J({
+        status: k[0]?.status || "not_submitted",
+        submitted_at: k[0]?.submitted_at,
+        reviewed_at: k[0]?.reviewed_at,
+      });
+    }
+
+    if (path === "/api/kyc/submit" && method === "POST") {
+      if (!user) return E("Unauthorized", 401);
+      const docType = String(body.documentType || "").trim();
+      const docNum = String(body.documentNumber || "").trim();
+
+      if (!docType || !docNum) return E("Document type and number required");
+
+      await dbUpsert(env, "kyc", {
+        user_id: user.id,
+        status: "pending",
+        document_type: docType,
+        document_number: docNum,
+        submitted_at: new Date().toISOString(),
+      });
+
+      return J({ ok: true });
+    }
+
+    if (path === "/api/paystack/init" && method === "POST") {
+      if (!user) return E("Unauthorized", 401);
+      try {
+        if (!PAYSTACK_SECRET) return E("Payment gateway not configured");
+
+        const amtKobo = parseToAtomic("NGN", String(body.amountNgn || ""));
+        if (amtKobo < 10000n) return E("Minimum deposit is ₦100");
+
+        const u = await dbSelect(env, "users", `id=eq.${user.id}&select=email`);
+        const ref = `LRM-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+        const r = await fetch("https://api.paystack.co/transaction/initialize", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${PAYSTACK_SECRET}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: u[0].email,
+            amount: Number(amtKobo),
+            reference: ref,
+            callback_url: `${PUBLIC_URL}/paystack_callback.html?reference=${ref}`,
+            metadata: { user_id: user.id },
+          }),
+        });
+
+        const data = await r.json();
+        if (!data.status) return E(data.message || "Paystack init failed");
+
+        await dbInsert(
+          env,
+          "paystack_transactions",
+          {
+            reference: ref,
+            user_id: user.id,
+            amount: amtKobo.toString(),
+            status: "initialized",
+          },
+          false
+        );
+
+        return J({
+          authorization_url: data.data.authorization_url,
+          reference: ref,
+        });
+      } catch (e) {
+        console.error(e);
+        return E("Server error", 500);
+      }
+    }
+
+    if (path === "/api/paystack/verify" && method === "GET") {
+      if (!user) return E("Unauthorized", 401);
+      try {
+        if (!PAYSTACK_SECRET) return E("Payment gateway not configured");
+
+        const ref = url.searchParams.get("reference") || "";
+        const txs = await dbSelect(env, "paystack_transactions", `reference=eq.${encodeURIComponent(ref)}`);
+        const tx = txs[0];
+
+        if (!tx) return E("Transaction not found", 404);
+        if (Number(tx.user_id) !== user.id) return E("Forbidden", 403);
+
+        if (tx.status === "success") {
+          const credited2 = formatAtomic("NGN", BigInt(tx.amount));
+          return J({
+            ok: true,
+            message: "Already credited",
+            amountNgn: credited2,
+            creditedNgn: credited2,
+          });
+        }
+
+        const r = await fetch(`https://api.paystack.co/transaction/verify/${ref}`, {
+          headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` },
+        });
+
+        const data = await r.json();
+        if (!data.status || data.data.status !== "success") return E("Payment not successful");
+
+        const amt = BigInt(data.data.amount);
+        const result = await dbRpc(env, "finalize_paystack_deposit", {
+          p_reference: ref,
+          p_amount: amt.toString(),
+          p_credit_type: "paystack_deposit",
+        });
+
+        const credited = formatAtomic("NGN", BigInt(result.amount || amt.toString()));
+        return J({
+          ok: true,
+          amountNgn: credited,
+          creditedNgn: credited,
+          alreadyProcessed: !!result.already_processed,
+        });
+      } catch (e) {
+        console.error(e);
+        return E("Server error", 500);
+      }
+    }
+
+    if (path === "/api/paystack/webhook" && method === "POST") {
+      try {
+        if (!PAYSTACK_SECRET) {
+          return new Response("ok", { status: 200, headers: buildResponseHeaders(request, env) });
+        }
+
+        const sig = request.headers.get("x-paystack-signature") || "";
+        const key = await crypto.subtle.importKey(
+          "raw",
+          new TextEncoder().encode(PAYSTACK_SECRET),
+          { name: "HMAC", hash: "SHA-512" },
+          false,
+          ["sign"]
+        );
+        const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
+        const exp = Array.from(new Uint8Array(mac))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+
+        if (sig !== exp) {
+          return new Response("Unauthorized", {
+            status: 401,
+            headers: buildResponseHeaders(request, env),
+          });
+        }
+
+        const ev = JSON.parse(rawBody || "{}");
+        if (ev.event !== "charge.success") {
+          return new Response("ok", { status: 200, headers: buildResponseHeaders(request, env) });
+        }
+
+        const txs = await dbSelect(
+          env,
+          "paystack_transactions",
+          `reference=eq.${encodeURIComponent(ev.data.reference)}`
+        );
+        const tx = txs[0];
+        if (!tx) {
+          return new Response("ok", { status: 200, headers: buildResponseHeaders(request, env) });
+        }
+
+        const amt = BigInt(ev.data.amount || tx.amount || 0);
+        const result = await dbRpc(env, "finalize_paystack_deposit", {
+          p_reference: ev.data.reference,
+          p_amount: amt.toString(),
+          p_credit_type: "paystack_deposit_webhook",
+        });
+
+        await dbUpdate(
+          env,
+          "paystack_transactions",
+          `reference=eq.${encodeURIComponent(ev.data.reference)}`,
+          {
+            raw_json: rawBody,
+            processed_at: result.already_processed ? tx.processed_at : new Date().toISOString(),
+          }
+        );
+
+        return new Response("ok", { status: 200, headers: buildResponseHeaders(request, env) });
+      } catch (e) {
+        console.error(e);
+        return new Response("error", { status: 500, headers: buildResponseHeaders(request, env) });
+      }
+    }
+
+    if (path === "/api/admin/stats" && method === "GET") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+
+      const [stats, rate] = await Promise.all([
+        dbRpc(env, "get_admin_stats", {}),
+        dbSelect(env, "rates", ""),
+      ]);
+
+      const rateMap = {};
+      rate.forEach((r) => {
+        rateMap[r.pair] = formatAtomic("NGN", BigInt(r.rate));
+      });
+
+      return J({ ...stats, rates: rateMap });
+    }
+
+    if (path === "/api/admin/users" && method === "GET") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100", 10), 500);
+      const offset = parseInt(url.searchParams.get("offset") || "0", 10);
+      const search = url.searchParams.get("search") || "";
+
+      let q = `select=id,email,role,full_name,phone,is_suspended,created_at,last_login_at&order=id.desc&limit=${limit}&offset=${offset}`;
+      if (search) {
+        q += `&or=(email.ilike.*${encodeURIComponent(search)}*,full_name.ilike.*${encodeURIComponent(search)}*)`;
+      }
+
+      const rows = await dbSelect(env, "users", q);
+      return J({ users: rows.map((r) => ({ ...r, isAdmin: isAdminRecord(r) })) });
+    }
+
+    if (path.match(/^\/api\/admin\/users\/(\d+)$/) && method === "GET") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+
+      const uid = Number(path.match(/\/(\d+)$/)[1]);
+      const [u, k, w] = await Promise.all([
+        dbSelect(
+          env,
+          "users",
+          `id=eq.${uid}&select=id,email,role,full_name,phone,is_suspended,created_at,last_login_at`
+        ),
+        dbSelect(env, "kyc", `user_id=eq.${uid}`),
+        dbSelect(env, "wallets", `user_id=eq.${uid}`),
+      ]);
+
+      if (!u.length) return E("User not found", 404);
+      return J({
+        user: { ...u[0], isAdmin: isAdminRecord(u[0]) },
+        kyc: k[0] || { status: "not_submitted" },
+        wallets: fmtWallets(w),
+      });
+    }
+
+    if (path.match(/^\/api\/admin\/users\/(\d+)\/suspend$/) && method === "POST") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      const uid = Number(path.match(/\/(\d+)\/suspend$/)[1]);
+      await dbUpdate(env, "users", `id=eq.${uid}`, { is_suspended: body.suspend !== false });
+      return J({ ok: true });
+    }
+
+    if (path.match(/^\/api\/admin\/users\/(\d+)\/kyc-force-approve$/) && method === "POST") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      const uid = Number(path.match(/\/(\d+)\/kyc-force-approve$/)[1]);
+      await dbUpsert(env, "kyc", {
+        user_id: uid,
+        status: "approved",
+        reviewed_at: new Date().toISOString(),
+        reviewer_id: user.id,
+        notes: body.notes || "Admin approved",
+      });
+      return J({ ok: true });
+    }
+
+    if (path === "/api/admin/kyc/pending" && method === "GET") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      const rows = await dbSelect(env, "kyc", "status=eq.pending&order=submitted_at.asc");
+      const enriched = await Promise.all(
+        rows.map(async (k) => {
+          const u = await dbSelect(env, "users", `id=eq.${k.user_id}&select=email,full_name`);
+          return { ...k, email: u[0]?.email, full_name: u[0]?.full_name };
+        })
+      );
+      return J({ pending: enriched });
+    }
+
+    if (path.match(/^\/api\/admin\/kyc\/(\d+)\/(approve|reject)$/) && method === "POST") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      const [, uid, action] = path.match(/^\/api\/admin\/kyc\/(\d+)\/(approve|reject)$/);
+      await dbUpdate(env, "kyc", `user_id=eq.${uid}`, {
+        status: action === "approve" ? "approved" : "rejected",
+        reviewed_at: new Date().toISOString(),
+        reviewer_id: user.id,
+        notes: body.notes || null,
+      });
+      return J({ ok: true });
+    }
+
+    if (path === "/api/admin/rates" && method === "POST") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      try {
+        const pair = String(body.pair || "").toUpperCase();
+        if (!PAIRS.includes(pair)) return E("Unsupported pair");
+
+        const rateKobo = parseToAtomic("NGN", String(body.rateNgnPerUnit || ""));
+        if (rateKobo <= 0n) return E("Rate must be > 0");
+
+        await dbUpsert(env, "rates", {
+          pair,
+          rate: rateKobo.toString(),
+          updated_at: new Date().toISOString(),
+        });
+
+        return J({ ok: true });
+      } catch (e) {
+        return E(String(e.message || e));
+      }
+    }
+
+    if (path === "/api/admin/wallet/credit" && method === "POST") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      try {
+        const uid = Number(body.userId);
+        const cur = String(body.currency || "").toUpperCase();
+        const amt = parseToAtomic(cur, String(body.amount || ""));
+        if (amt <= 0n) return E("Amount must be > 0");
+        await dbRpc(env, "credit_wallet", {
+          p_user_id: uid,
+          p_currency: cur,
+          p_amount: amt.toString(),
+          p_type: "admin_credit",
+          p_reference: null,
+        });
+        return J({ ok: true });
+      } catch (e) {
+        return E(String(e.message || e));
+      }
+    }
+
+    if (path === "/api/admin/wallet/debit" && method === "POST") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      try {
+        const uid = Number(body.userId);
+        const cur = String(body.currency || "").toUpperCase();
+        const amt = parseToAtomic(cur, String(body.amount || ""));
+        if (amt <= 0n) return E("Amount must be > 0");
+        await dbRpc(env, "debit_wallet", {
+          p_user_id: uid,
+          p_currency: cur,
+          p_amount: amt.toString(),
+          p_type: "admin_debit",
+          p_reference: null,
+        });
+        return J({ ok: true });
+      } catch (e) {
+        return E(String(e.message || e));
+      }
+    }
+
+    if (path === "/api/admin/ledger" && method === "GET") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      const uid = url.searchParams.get("userId");
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100", 10), 500);
+      const q = uid ? `user_id=eq.${uid}&order=id.desc&limit=${limit}` : `order=id.desc&limit=${limit}`;
+      const rows = await dbSelect(env, "ledger", q);
+      return J({
+        entries: rows.map((r) => ({
+          id: r.id,
+          user_id: r.user_id,
+          type: r.type,
+          currency: r.currency,
+          amount: formatAtomic(r.currency, BigInt(r.amount)),
+          reference: r.reference,
+          created_at: r.created_at,
+        })),
+      });
+    }
+
+    if (path === "/api/admin/withdrawals/pending" && method === "GET") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      const rows = await dbSelect(env, "withdrawals", "status=eq.pending&order=created_at.asc&limit=200");
+      return J({
+        pending: rows.map((w) => ({
+          id: w.id,
+          user_id: w.user_id,
+          currency: w.currency,
+          network: w.network,
+          amount: formatAtomic(w.currency, BigInt(w.amount)),
+          destination: safeJson(w.destination_json),
+          created_at: w.created_at,
+        })),
+      });
+    }
+
+    if (path.match(/^\/api\/admin\/withdrawals\/(\d+)\/(mark-processed|reject)$/) && method === "POST") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      const [, wid, action] = path.match(/^\/api\/admin\/withdrawals\/(\d+)\/(mark-processed|reject)$/);
+      try {
+        await dbRpc(env, action === "mark-processed" ? "process_withdrawal" : "reject_withdrawal", {
+          p_withdrawal_id: Number(wid),
+          p_admin_id: user.id,
+          p_notes: body.notes || null,
+        });
+        return J({ ok: true });
+      } catch (e) {
+        return E(String(e.message || e));
+      }
+    }
+
+    if (path === "/api/admin/announcements" && method === "POST") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      const title = String(body.title || "").trim();
+      const btext = String(body.body || "").trim();
+      if (!title || !btext) return E("title and body required");
+      const rows = await dbInsert(env, "announcements", {
+        title,
+        body: btext,
+        type: body.type || "info",
+        created_by: user.id,
+        expires_at: body.expiresAt || null,
+      });
+      return J({ ok: true, id: rows[0].id });
+    }
+
+    if (path.match(/^\/api\/admin\/announcements\/(\d+)$/) && method === "DELETE") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      const id = Number(path.match(/\/(\d+)$/)[1]);
+      await dbUpdate(env, "announcements", `id=eq.${id}`, { active: false });
+      return J({ ok: true });
+    }
+
+    if (path === "/api/admin/deposit-address" && method === "POST") {
+      if (!user || !user.isAdmin) return E("Admin only", 403);
+      const targetUid = Number(body.userId);
+      const currency = String(body.currency || "").toUpperCase();
+      const network = String(body.network || "").trim();
+      const address = String(body.address || "").trim();
+
+      if (!NETWORKS[currency]) return E("Unsupported currency");
+      if (!address) return E("Address required");
+
+      await dbUpsert(env, "deposit_addresses", {
+        user_id: targetUid,
+        currency,
+        network,
+        address,
+      });
+
+      return J({ ok: true });
+    }
+
+    return E("Not found", 404);
+  },
+};
+
+export {
+  worker_default as default,
+};

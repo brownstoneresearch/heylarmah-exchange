@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Hey Larmah Exchange — Trade Crypto × Naira</title>
+  <meta name="description" content="Nigeria's premier crypto exchange. Trade Bitcoin, Ethereum, USDT, BNB and TRX for Naira. Regulated. Secure. Instant."/>
+  <meta property="og:title" content="Hey Larmah Exchange"/>
+  <meta property="og:description" content="Trade Bitcoin, Ethereum, USDT, BNB, TRX for Naira. Regulated Nigerian crypto exchange."/>
+  <meta name="theme-color" content="#f59e0b"/>
+  <link rel="stylesheet" href="./styles.css"/>
+  <script src="./config.js"></script>
+  <script src="./runtime.js"></script>
+</head>
+<body>
+<div class="topbar"></div>
+
+<div class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-logo-wrap">
+      <div class="auth-logo">HL</div>
+      <h1>Hey Larmah Exchange</h1>
+      <p>Trade Crypto × Naira · BTC · ETH · USDT · BNB · TRX</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="auth-tabs" id="authTabs">
+      <button class="auth-tab active" onclick="showTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="showTab('register')">Register</button>
+    </div>
+
+    <div class="auth-card">
+      <!-- LOGIN -->
+      <div class="auth-form active" id="form-login">
+        <div class="field">
+          <label>Email Address</label>
+          <input id="l-email" type="email" placeholder="you@example.com" autocomplete="email"/>
+        </div>
+        <div class="field" style="position:relative">
+          <label>Password</label>
+          <input id="l-pwd" type="password" placeholder="••••••••" autocomplete="current-password"/>
+          <span class="eye-toggle" onclick="togglePwd('l-pwd',this)">👁</span>
+        </div>
+        <div style="text-align:right;margin:-6px 0 14px">
+          <a href="#" onclick="showTab('forgot');return false" class="link-sm">Forgot password?</a>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="doLogin()" id="loginBtn">Sign In</button>
+        <div id="loginMsg" class="msg"></div>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="auth-form" id="form-register">
+        <div class="grid-2">
+          <div class="field">
+            <label>Full Name</label>
+            <input id="r-name" type="text" placeholder="Jane Doe" autocomplete="name"/>
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input id="r-phone" type="tel" placeholder="+234..."/>
+          </div>
+        </div>
+        <div class="field">
+          <label>Email Address</label>
+          <input id="r-email" type="email" placeholder="you@example.com" autocomplete="email"/>
+        </div>
+        <div class="field" style="position:relative">
+          <label>Password (min 8 characters)</label>
+          <input id="r-pwd" type="password" placeholder="••••••••" autocomplete="new-password"/>
+          <span class="eye-toggle" onclick="togglePwd('r-pwd',this)">👁</span>
+        </div>
+        <div class="field" style="position:relative">
+          <label>Confirm Password</label>
+          <input id="r-pwd2" type="password" placeholder="••••••••"/>
+          <span class="eye-toggle" onclick="togglePwd('r-pwd2',this)">👁</span>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="doRegister()" id="regBtn">Create Account</button>
+        <div id="regMsg" class="msg"></div>
+      </div>
+
+      <!-- FORGOT PASSWORD -->
+      <div class="auth-form" id="form-forgot">
+        <div style="margin-bottom:16px;font-size:13px;color:var(--text-dim);line-height:1.6">
+          Enter your email address and we'll send you a link to reset your password.
+        </div>
+        <div class="field">
+          <label>Email Address</label>
+          <input id="fp-email" type="email" placeholder="you@example.com" autocomplete="email"/>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="doForgot()" id="forgotBtn">Send Reset Link</button>
+        <div id="forgotMsg" class="msg"></div>
+        <div style="margin-top:14px;text-align:center">
+          <a href="#" onclick="showTab('login');return false" class="link-sm">← Back to Sign In</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-footer">
+      By continuing you agree to the platform terms. KYC required for withdrawals.
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const appUrl = window.HLX?.appUrl || (path => path);
+const sharedApi = window.HLX?.api || (async () => ({ok:false,status:0,j:{error:'Runtime not loaded'}}));
+
+function showTab(tab) {
+  ['login','register','forgot'].forEach(t => {
+    $('form-'+t).classList.toggle('active', t===tab);
+  });
+  const tabs = document.querySelectorAll('.auth-tab');
+  if (tab==='login')    { tabs[0].classList.add('active');    tabs[1].classList.remove('active'); }
+  if (tab==='register') { tabs[0].classList.remove('active'); tabs[1].classList.add('active'); }
+  if (tab==='forgot')   { tabs[0].classList.remove('active'); tabs[1].classList.remove('active'); }
+  ['loginMsg','regMsg','forgotMsg'].forEach(id => { $(id).textContent=''; $(id).className='msg'; });
+}
+
+function setMsg(id, text, type='err') {
+  $(id).textContent = text;
+  $(id).className = 'msg ' + (text ? type : '');
+}
+
+function togglePwd(id, el) {
+  const inp = $(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  el.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+async function api(path, opts={}) {
+  return sharedApi(path, opts);
+}
+
+async function doLogin() {
+  const btn = $('loginBtn');
+  const email = $('l-email').value.trim();
+  const pwd   = $('l-pwd').value;
+  if (!email||!pwd) return setMsg('loginMsg','Email and password required');
+  btn.textContent='Signing in…'; btn.disabled=true;
+  const {ok,j} = await api('/api/auth/login',{method:'POST',body:JSON.stringify({email,password:pwd})});
+  btn.textContent='Sign In'; btn.disabled=false;
+  if (!ok) return setMsg('loginMsg', j.error||'Login failed');
+  localStorage.setItem('token', j.token);
+  localStorage.setItem('userRole', j.user?.role||'user');
+  setMsg('loginMsg','Welcome back! Redirecting…','ok');
+  setTimeout(() => {
+    window.location.href = j.user?.role === 'admin' ? appUrl('/admin.html') : appUrl('/app.html');
+  }, 500);
+}
+
+async function doRegister() {
+  const btn = $('regBtn');
+  const email = $('r-email').value.trim();
+  const pwd   = $('r-pwd').value;
+  const pwd2  = $('r-pwd2').value;
+  const name  = $('r-name').value.trim();
+  const phone = $('r-phone').value.trim();
+  if (!email||!pwd) return setMsg('regMsg','Email and password required');
+  if (pwd !== pwd2) return setMsg('regMsg','Passwords do not match');
+  if (pwd.length < 8) return setMsg('regMsg','Password must be at least 8 characters');
+  btn.textContent='Creating…'; btn.disabled=true;
+  const {ok,j} = await api('/api/auth/register',{method:'POST',body:JSON.stringify({email,password:pwd,fullName:name,phone})});
+  btn.textContent='Create Account'; btn.disabled=false;
+  if (!ok) return setMsg('regMsg', j.error||'Registration failed');
+  localStorage.setItem('token', j.token);
+  localStorage.setItem('userRole', j.user?.role||'user');
+  setMsg('regMsg','Account created! Redirecting…','ok');
+  setTimeout(()=>{ window.location.href = appUrl('/app.html'); }, 500);
+}
+
+async function doForgot() {
+  const btn = $('forgotBtn');
+  const email = $('fp-email').value.trim();
+  if (!email) return setMsg('forgotMsg','Email address required');
+  btn.textContent='Sending…'; btn.disabled=true;
+  const {ok,j} = await api('/api/auth/forgot-password',{method:'POST',body:JSON.stringify({email})});
+  btn.textContent='Send Reset Link'; btn.disabled=false;
+  setMsg('forgotMsg', j.message||'If that email exists, a reset link has been sent.', ok?'ok':'err');
+}
+
+// Redirect if already logged in
+(async () => {
+  const tok = localStorage.getItem('token');
+  if (!tok) return;
+  const {ok,j} = await api('/api/me');
+  if (ok) window.location.href = j.user?.role==='admin' ? appUrl('/admin.html') : appUrl('/app.html');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+name = "heylarmah-exchange"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[vars]
+PUBLIC_URL = "https://heylarmah-exchange.pages.dev"
+WORKER_URL = "https://heylarmah-exchange.brownstonetberesearch.workers.dev"
+ALLOWED_ORIGINS = "https://heylarmah-exchange.pages.dev,https://heylarmah-exchange.brownstonetberesearch.workers.dev"
+ADMIN_EMAIL = "heylarmahtech@outlook.com"
+SWAP_FEE_BPS = "50"
+TRADE_FEE_BPS = "20"
+SUPABASE_URL = "https://tohgcaikauztycmqtgeg.supabase.co"
+RESEND_FROM = "Hey Larmah Exchange <onboarding@resend.dev>"

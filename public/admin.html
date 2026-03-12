@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin — Hey Larmah Exchange</title>
+  <link rel="stylesheet" href="./styles.css"/>
+  <script src="./config.js"></script>
+  <script src="./runtime.js"></script>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="wrap">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo admin-logo">⚙</div>
+      <div class="brand-text">
+        <h1>Admin Panel</h1>
+        <div class="sub" id="adminWhoami">Loading…</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="badge badge-admin">Administrator</span>
+      <a href="https://heylarmah-exchange.pages.dev/app.html" class="btn btn-secondary btn-sm">User View</a>
+      <button class="btn btn-secondary btn-sm" onclick="logout()">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="stats">Dashboard</button>
+    <button class="tab-btn" data-tab="users">Users</button>
+    <button class="tab-btn" data-tab="kyc">KYC Review</button>
+    <button class="tab-btn" data-tab="withdrawals">Withdrawals</button>
+    <button class="tab-btn" data-tab="rates">Rates</button>
+    <button class="tab-btn" data-tab="wallets">Wallets</button>
+    <button class="tab-btn" data-tab="ledger">Ledger</button>
+    <button class="tab-btn" data-tab="deposits">Deposit Addrs</button>
+    <button class="tab-btn" data-tab="announce">Announcements</button>
+  </div>
+
+  <!-- ══════════════════════════════════════ STATS ══════ -->
+  <div class="tab-panel active" id="tab-stats">
+    <div class="grid-4" id="statCards" style="margin-bottom:22px">
+      <div class="stat-card"><div class="label">Total Users</div><div class="value" id="st-users">—</div></div>
+      <div class="stat-card"><div class="label">Active (30d)</div><div class="value teal" id="st-active">—</div></div>
+      <div class="stat-card"><div class="label">KYC Pending</div><div class="value blue" id="st-kycp">—</div></div>
+      <div class="stat-card"><div class="label">KYC Approved</div><div class="value green" id="st-kyca">—</div></div>
+      <div class="stat-card"><div class="label">Pending Withdrawals</div><div class="value" id="st-pw">—</div></div>
+      <div class="stat-card"><div class="label">Open Orders</div><div class="value teal" id="st-orders">—</div></div>
+      <div class="stat-card"><div class="label">Trades (24h)</div><div class="value green" id="st-trades">—</div></div>
+      <div class="stat-card"><div class="label">Last Updated</div><div class="value" id="st-time" style="font-size:13px">—</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Current Exchange Rates (Admin Set)</div>
+      <div id="adminRatesDisplay" class="grid-3" style="gap:12px;margin-top:4px"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ USERS ══════ -->
+  <div class="tab-panel" id="tab-users">
+    <div class="card">
+      <div class="card-title flex-between">
+        User Management
+        <button class="btn btn-secondary btn-sm" onclick="adminLoadUsers()">↻ Refresh</button>
+      </div>
+      <div class="flex" style="margin-bottom:14px;gap:10px;flex-wrap:wrap">
+        <input id="userSearch" placeholder="Search email or name…" style="max-width:320px" oninput="debounceSearch()"/>
+        <button class="btn btn-secondary btn-sm" onclick="adminLoadUsers()">Search</button>
+      </div>
+      <div class="tbl-wrap"><table id="usersTable">
+        <thead><tr><th>ID</th><th>Email</th><th>Name</th><th>Role</th><th>KYC</th><th>Status</th><th>Joined</th><th>Last Login</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ KYC REVIEW ═ -->
+  <div class="tab-panel" id="tab-kyc">
+    <div class="card">
+      <div class="card-title flex-between">
+        KYC Pending Review
+        <button class="btn btn-secondary btn-sm" onclick="adminLoadKyc()">↻ Refresh</button>
+      </div>
+      <div class="tbl-wrap"><table id="kycTable">
+        <thead><tr><th>User ID</th><th>Email</th><th>Name</th><th>Doc Type</th><th>Doc No.</th><th>Submitted</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ WITHDRAWALS ═ -->
+  <div class="tab-panel" id="tab-withdrawals">
+    <div class="card">
+      <div class="card-title flex-between">
+        Pending Withdrawals
+        <button class="btn btn-secondary btn-sm" onclick="adminLoadWithdrawals()">↻ Refresh</button>
+      </div>
+      <div class="tbl-wrap"><table id="adminWTable">
+        <thead><tr><th>ID</th><th>User ID</th><th>Currency</th><th>Network</th><th>Amount</th><th>Destination</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ RATES ══════ -->
+  <div class="tab-panel" id="tab-rates">
+    <div class="card">
+      <div class="card-title">Set Exchange Rates (NGN per 1 unit)</div>
+      <div class="grid-3" style="gap:18px">
+        <div>
+          <div class="field"><label>BTC/NGN Rate</label><input id="rate-BTCNGN" placeholder="e.g. 95000000"/></div>
+          <button class="btn btn-primary btn-full" onclick="setRate('BTCNGN')">Update BTC/NGN</button>
+          <div id="rateMsg-BTCNGN" class="msg"></div>
+        </div>
+        <div>
+          <div class="field"><label>ETH/NGN Rate</label><input id="rate-ETHNGN" placeholder="e.g. 6000000"/></div>
+          <button class="btn btn-primary btn-full" onclick="setRate('ETHNGN')">Update ETH/NGN</button>
+          <div id="rateMsg-ETHNGN" class="msg"></div>
+        </div>
+        <div>
+          <div class="field"><label>USDT/NGN Rate</label><input id="rate-USDTNGN" placeholder="e.g. 1650"/></div>
+          <button class="btn btn-primary btn-full" onclick="setRate('USDTNGN')">Update USDT/NGN</button>
+          <div id="rateMsg-USDTNGN" class="msg"></div>
+        </div>
+        <div>
+          <div class="field"><label>BNB/NGN Rate</label><input id="rate-BNBNGN" placeholder="e.g. 900000"/></div>
+          <button class="btn btn-primary btn-full" onclick="setRate('BNBNGN')">Update BNB/NGN</button>
+          <div id="rateMsg-BNBNGN" class="msg"></div>
+        </div>
+        <div>
+          <div class="field"><label>TRX/NGN Rate</label><input id="rate-TRXNGN" placeholder="e.g. 250"/></div>
+          <button class="btn btn-primary btn-full" onclick="setRate('TRXNGN')">Update TRX/NGN</button>
+          <div id="rateMsg-TRXNGN" class="msg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ WALLETS ════ -->
+  <div class="tab-panel" id="tab-wallets">
+    <div class="card">
+      <div class="card-title">Adjust User Wallet</div>
+      <div class="grid-2" style="gap:24px">
+        <div>
+          <div class="field"><label>User ID</label><input id="walUid" placeholder="e.g. 2"/></div>
+          <div class="field">
+            <label>Currency</label>
+            <select id="walCur">
+              <option>NGN</option><option>BTC</option><option>ETH</option>
+              <option>USDT</option><option>BNB</option><option>TRX</option>
+            </select>
+          </div>
+          <div class="field"><label>Amount</label><input id="walAmt" placeholder="e.g. 1000"/></div>
+          <div class="flex" style="gap:10px">
+            <button class="btn btn-teal btn-full" onclick="adminCredit()">Credit ↑</button>
+            <button class="btn btn-danger btn-full" onclick="adminDebit()">Debit ↓</button>
+          </div>
+          <div id="walMsg" class="msg"></div>
+        </div>
+        <div>
+          <div class="field"><label>Lookup User ID</label><input id="walViewUid" placeholder="Enter user ID"/></div>
+          <button class="btn btn-secondary btn-full" onclick="adminViewWallets()">View Wallets</button>
+          <div id="walViewResult" style="margin-top:14px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ LEDGER ═════ -->
+  <div class="tab-panel" id="tab-ledger">
+    <div class="card">
+      <div class="card-title">Ledger Audit</div>
+      <div class="flex" style="margin-bottom:14px;gap:10px;flex-wrap:wrap">
+        <input id="ledUid" placeholder="User ID (blank = all)" style="max-width:220px"/>
+        <button class="btn btn-secondary btn-sm" onclick="adminLoadLedger()">Load</button>
+      </div>
+      <div class="tbl-wrap"><table id="adminLedger">
+        <thead><tr><th>ID</th><th>User</th><th>Type</th><th>Currency</th><th>Amount</th><th>Reference</th><th>Time</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ DEPOSIT ADDRS ═ -->
+  <div class="tab-panel" id="tab-deposits">
+    <div class="card">
+      <div class="card-title">Assign Deposit Addresses to Users</div>
+      <div class="grid-2">
+        <div>
+          <div class="field"><label>User ID</label><input id="daUid" placeholder="e.g. 2"/></div>
+          <div class="field">
+            <label>Coin</label>
+            <select id="daCoin" onchange="loadAdminNetworks()">
+              <option value="BTC">BTC</option><option value="ETH">ETH</option>
+              <option value="USDT">USDT</option><option value="BNB">BNB</option><option value="TRX">TRX</option>
+            </select>
+          </div>
+          <div class="field"><label>Network</label><select id="daNetwork"></select></div>
+          <div class="field"><label>Wallet Address</label><input id="daAddr" placeholder="Deposit address for this user"/></div>
+          <button class="btn btn-primary btn-full" onclick="assignDepositAddr()">Assign Address</button>
+          <div id="daMsg" class="msg"></div>
+        </div>
+        <div class="info-box" style="align-self:start">
+          <strong>How it works:</strong><br/><br/>
+          Each user gets a unique deposit address per coin/network. When they send crypto to that address and you confirm receipt, manually credit their wallet using the Wallets tab.<br/><br/>
+          This gives you full control over deposit processing.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ ANNOUNCEMENTS ═ -->
+  <div class="tab-panel" id="tab-announce">
+    <div class="card">
+      <div class="card-title">Broadcast Announcement</div>
+      <div class="grid-2">
+        <div class="field"><label>Title</label><input id="annTitle" placeholder="e.g. System Maintenance"/></div>
+        <div class="field">
+          <label>Type</label>
+          <select id="annType">
+            <option value="info">ℹ Info</option>
+            <option value="warning">⚠ Warning</option>
+            <option value="success">✅ Success</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Message</label><textarea id="annBody" rows="3" placeholder="Message to show all users…"></textarea></div>
+      <button class="btn btn-primary" onclick="postAnnouncement()">Post Announcement</button>
+      <div id="annMsg" class="msg"></div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+<script src="/admin.js"></script>
+</body>
+</html>

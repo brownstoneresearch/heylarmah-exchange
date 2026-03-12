@@ -1,0 +1,15 @@
+# Local worker variables for `wrangler dev`
+PUBLIC_URL="http://127.0.0.1:8787"
+WORKER_URL="http://127.0.0.1:8788"
+ALLOWED_ORIGINS="http://127.0.0.1:8787,http://127.0.0.1:8788"
+SUPABASE_URL="https://YOURPROJECT.supabase.co"
+
+# Secrets (use your own!)
+SUPABASE_SERVICE_ROLE_KEY="***"
+JWT_SECRET="***"
+PAYSTACK_PUBLIC_KEY="***"
+PAYSTACK_SECRET_KEY="***"
+RESEND_API_KEY=""
+RESEND_FROM="Hey Larmah Exchange <onboarding@resend.dev>"
+SWAP_FEE_BPS="50"
+TRADE_FEE_BPS="20"

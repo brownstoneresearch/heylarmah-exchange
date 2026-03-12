@@ -1,0 +1,8 @@
+node_modules
+.env
+.dev.vars
+worker-secrets.env
+worker-secrets.json
+.generated-jwt-secret.txt
+wrangler.toml.local
+.DS_Store

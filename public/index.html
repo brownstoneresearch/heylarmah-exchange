@@ -9,11 +9,8 @@
   <meta property="og:description" content="Trade Bitcoin, Ethereum, USDT, BNB, TRX for Naira. Regulated Nigerian crypto exchange."/>
   <meta name="theme-color" content="#f59e0b"/>
   <link rel="stylesheet" href="./styles.css"/>
-<<<<<<< HEAD
   <script src="./config.js"></script>
   <script src="./runtime.js"></script>
-=======
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 </head>
 <body>
 <div class="topbar"></div>
@@ -26,14 +23,12 @@
       <p>Trade Crypto × Naira · BTC · ETH · USDT · BNB · TRX</p>
     </div>
 
-    <!-- Tabs -->
     <div class="auth-tabs" id="authTabs">
       <button class="auth-tab active" onclick="showTab('login')">Sign In</button>
       <button class="auth-tab" onclick="showTab('register')">Register</button>
     </div>
 
     <div class="auth-card">
-      <!-- LOGIN -->
       <div class="auth-form active" id="form-login">
         <div class="field">
           <label>Email Address</label>
@@ -51,7 +46,6 @@
         <div id="loginMsg" class="msg"></div>
       </div>
 
-      <!-- REGISTER -->
       <div class="auth-form" id="form-register">
         <div class="grid-2">
           <div class="field">
@@ -81,7 +75,6 @@
         <div id="regMsg" class="msg"></div>
       </div>
 
-      <!-- FORGOT PASSWORD -->
       <div class="auth-form" id="form-forgot">
         <div style="margin-bottom:16px;font-size:13px;color:var(--text-dim);line-height:1.6">
           Enter your email address and we'll send you a link to reset your password.
@@ -106,24 +99,33 @@
 
 <script>
 const $ = id => document.getElementById(id);
-<<<<<<< HEAD
 const appUrl = window.HLX?.appUrl || (path => path);
-const sharedApi = window.HLX?.api || (async () => ({ok:false,status:0,j:{error:'Runtime not loaded'}}));
-=======
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
+const sharedApi = window.HLX?.api || (async () => ({ ok:false, status:0, j:{ error:'Runtime not loaded' } }));
 
 function showTab(tab) {
   ['login','register','forgot'].forEach(t => {
-    $('form-'+t).classList.toggle('active', t===tab);
+    $('form-' + t).classList.toggle('active', t === tab);
   });
   const tabs = document.querySelectorAll('.auth-tab');
-  if (tab==='login')    { tabs[0].classList.add('active');    tabs[1].classList.remove('active'); }
-  if (tab==='register') { tabs[0].classList.remove('active'); tabs[1].classList.add('active'); }
-  if (tab==='forgot')   { tabs[0].classList.remove('active'); tabs[1].classList.remove('active'); }
-  ['loginMsg','regMsg','forgotMsg'].forEach(id => { $(id).textContent=''; $(id).className='msg'; });
+  if (tab === 'login') {
+    tabs[0].classList.add('active');
+    tabs[1].classList.remove('active');
+  }
+  if (tab === 'register') {
+    tabs[0].classList.remove('active');
+    tabs[1].classList.add('active');
+  }
+  if (tab === 'forgot') {
+    tabs[0].classList.remove('active');
+    tabs[1].classList.remove('active');
+  }
+  ['loginMsg','regMsg','forgotMsg'].forEach(id => {
+    $(id).textContent = '';
+    $(id).className = 'msg';
+  });
 }
 
-function setMsg(id, text, type='err') {
+function setMsg(id, text, type = 'err') {
   $(id).textContent = text;
   $(id).className = 'msg ' + (text ? type : '');
 }
@@ -134,84 +136,98 @@ function togglePwd(id, el) {
   el.textContent = inp.type === 'password' ? '👁' : '🙈';
 }
 
-async function api(path, opts={}) {
-<<<<<<< HEAD
+async function api(path, opts = {}) {
   return sharedApi(path, opts);
-=======
-  const tok = localStorage.getItem('token');
-  const headers = {'Content-Type':'application/json', ...(opts.headers||{})};
-  if (tok) headers['Authorization'] = 'Bearer ' + tok;
-  const res = await fetch(path, {...opts, headers});
-  const j = await res.json().catch(()=>({}));
-  return {ok:res.ok, j};
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
 }
 
 async function doLogin() {
   const btn = $('loginBtn');
   const email = $('l-email').value.trim();
-  const pwd   = $('l-pwd').value;
-  if (!email||!pwd) return setMsg('loginMsg','Email and password required');
-  btn.textContent='Signing in…'; btn.disabled=true;
-  const {ok,j} = await api('/api/auth/login',{method:'POST',body:JSON.stringify({email,password:pwd})});
-  btn.textContent='Sign In'; btn.disabled=false;
-  if (!ok) return setMsg('loginMsg', j.error||'Login failed');
+  const pwd = $('l-pwd').value;
+  if (!email || !pwd) return setMsg('loginMsg', 'Email and password required');
+
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+
+  const { ok, j } = await api('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password: pwd })
+  });
+
+  btn.textContent = 'Sign In';
+  btn.disabled = false;
+
+  if (!ok) return setMsg('loginMsg', j.error || 'Login failed');
+
   localStorage.setItem('token', j.token);
-  localStorage.setItem('userRole', j.user?.role||'user');
-  setMsg('loginMsg','Welcome back! Redirecting…','ok');
+  localStorage.setItem('userRole', j.user?.role || 'user');
+  setMsg('loginMsg', 'Welcome back! Redirecting…', 'ok');
+
   setTimeout(() => {
-<<<<<<< HEAD
     window.location.href = j.user?.role === 'admin' ? appUrl('/admin.html') : appUrl('/app.html');
-=======
-    window.location.href = j.user?.role === 'admin' ? '/admin.html' : '/app.html';
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
   }, 500);
 }
 
 async function doRegister() {
   const btn = $('regBtn');
   const email = $('r-email').value.trim();
-  const pwd   = $('r-pwd').value;
-  const pwd2  = $('r-pwd2').value;
-  const name  = $('r-name').value.trim();
+  const pwd = $('r-pwd').value;
+  const pwd2 = $('r-pwd2').value;
+  const name = $('r-name').value.trim();
   const phone = $('r-phone').value.trim();
-  if (!email||!pwd) return setMsg('regMsg','Email and password required');
-  if (pwd !== pwd2) return setMsg('regMsg','Passwords do not match');
-  if (pwd.length < 8) return setMsg('regMsg','Password must be at least 8 characters');
-  btn.textContent='Creating…'; btn.disabled=true;
-  const {ok,j} = await api('/api/auth/register',{method:'POST',body:JSON.stringify({email,password:pwd,fullName:name,phone})});
-  btn.textContent='Create Account'; btn.disabled=false;
-  if (!ok) return setMsg('regMsg', j.error||'Registration failed');
+
+  if (!email || !pwd) return setMsg('regMsg', 'Email and password required');
+  if (pwd !== pwd2) return setMsg('regMsg', 'Passwords do not match');
+  if (pwd.length < 8) return setMsg('regMsg', 'Password must be at least 8 characters');
+
+  btn.textContent = 'Creating…';
+  btn.disabled = true;
+
+  const { ok, j } = await api('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password: pwd, fullName: name, phone })
+  });
+
+  btn.textContent = 'Create Account';
+  btn.disabled = false;
+
+  if (!ok) return setMsg('regMsg', j.error || 'Registration failed');
+
   localStorage.setItem('token', j.token);
-  localStorage.setItem('userRole', j.user?.role||'user');
-  setMsg('regMsg','Account created! Redirecting…','ok');
-<<<<<<< HEAD
-  setTimeout(()=>{ window.location.href = appUrl('/app.html'); }, 500);
-=======
-  setTimeout(()=>{ window.location.href='/app.html'; }, 500);
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
+  localStorage.setItem('userRole', j.user?.role || 'user');
+  setMsg('regMsg', 'Account created! Redirecting…', 'ok');
+
+  setTimeout(() => {
+    window.location.href = appUrl('/app.html');
+  }, 500);
 }
 
 async function doForgot() {
   const btn = $('forgotBtn');
   const email = $('fp-email').value.trim();
-  if (!email) return setMsg('forgotMsg','Email address required');
-  btn.textContent='Sending…'; btn.disabled=true;
-  const {ok,j} = await api('/api/auth/forgot-password',{method:'POST',body:JSON.stringify({email})});
-  btn.textContent='Send Reset Link'; btn.disabled=false;
-  setMsg('forgotMsg', j.message||'If that email exists, a reset link has been sent.', ok?'ok':'err');
+  if (!email) return setMsg('forgotMsg', 'Email address required');
+
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+
+  const { ok, j } = await api('/api/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email })
+  });
+
+  btn.textContent = 'Send Reset Link';
+  btn.disabled = false;
+
+  setMsg('forgotMsg', j.message || 'If that email exists, a reset link has been sent.', ok ? 'ok' : 'err');
 }
 
-// Redirect if already logged in
 (async () => {
   const tok = localStorage.getItem('token');
   if (!tok) return;
-  const {ok,j} = await api('/api/me');
-<<<<<<< HEAD
-  if (ok) window.location.href = j.user?.role==='admin' ? appUrl('/admin.html') : appUrl('/app.html');
-=======
-  if (ok) window.location.href = j.user?.role==='admin' ? '/admin.html' : '/app.html';
->>>>>>> 883abcdf4de9d28ed21f79be4df8f0c648c04f7f
+  const { ok, j } = await api('/api/me');
+  if (ok) {
+    window.location.href = j.user?.role === 'admin' ? appUrl('/admin.html') : appUrl('/app.html');
+  }
 })();
 </script>
 </body>
